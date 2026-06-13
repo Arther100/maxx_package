@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAXX Events & Planners — South Tamil Nadu's AI Event Planner</title>
-<meta name="description" content="South Tamil Nadu's first AI-powered event planning company. Wedding, Birthday, Seemantham, Corporate — complete A to Z event planning across Madurai, Tirunelveli, Thoothukudi, Nagercoil.">
+<meta name="description" content="South Tamil Nadu's first AI-powered event planning company. Wedding, Birthday, Baby Shower, Corporate — complete A to Z event planning across Madurai, Tirunelveli, Thoothukudi, Nagercoil.">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -123,6 +123,8 @@ section{padding:80px 5vw}
 .portfolio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .portfolio-card{border-radius:12px;overflow:hidden;background:var(--charcoal);border:1px solid var(--mid);position:relative;aspect-ratio:4/3;display:flex;align-items:flex-end}
 .portfolio-img{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:60px;background:var(--mid)}
+.portfolio-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
+.portfolio-card:hover .portfolio-img img{transform:scale(1.05)}
 .portfolio-overlay{position:relative;z-index:1;padding:16px;background:linear-gradient(to top,rgba(10,10,10,.95),transparent);width:100%}
 .portfolio-type{font-size:10px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:4px}
 .portfolio-name{font-size:14px;font-weight:500;color:var(--white)}
@@ -409,7 +411,7 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
       <div class="svc-card"><div class="svc-icon">💒</div><div class="svc-name">Wedding A to Z</div></div>
       <div class="svc-card"><div class="svc-icon">💫</div><div class="svc-name">Reception</div></div>
       <div class="svc-card"><div class="svc-icon">💍</div><div class="svc-name">Engagement</div></div>
-      <div class="svc-card"><div class="svc-icon">🌸</div><div class="svc-name">Seemantham</div></div>
+      <div class="svc-card"><div class="svc-icon">🌸</div><div class="svc-name">Baby Shower</div></div>
       <div class="svc-card"><div class="svc-icon">🎂</div><div class="svc-name">Birthday Party</div></div>
       <div class="svc-card"><div class="svc-icon">🎊</div><div class="svc-name">1st Birthday</div></div>
       <div class="svc-card"><div class="svc-icon">👑</div><div class="svc-name">60th / 80th Birthday</div></div>
@@ -467,7 +469,7 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
         <div class="pkg-header">
           <div class="pkg-name">✦ Gold</div>
           <div class="pkg-price-prefix">Starting from</div>
-          <div class="pkg-price">₹2,19,000<span>+</span></div>
+          <div class="pkg-price">₹1,80,000<span>+</span></div>
           <div class="pkg-price-note">Starting price only — amount will differ based on customization, guest count, location and date</div>
           <div class="pkg-guests">Upto 300 guests · 2–3 days</div>
         </div>
@@ -552,7 +554,7 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
       <!-- SEEMANTHAM / VALAIKAPPU -->
       <div class="pkg-card">
         <div class="pkg-header">
-          <div class="pkg-name">🌸 Seemantham / Valaikappu</div>
+          <div class="pkg-name">🌸 Baby Shower</div>
           <div class="pkg-price-prefix">Starting from</div>
           <div class="pkg-price">₹25,000<span>+</span></div>
           <div class="pkg-price-note">Starting price only — amount will differ based on customization, guest count, location and date</div>
@@ -568,7 +570,7 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
             <li>Highlight reel 24 hours</li>
           </ul>
           <div class="pkg-custom-note">✦ Fully customizable — build your own package</div>
-          <a href="https://wa.me/918778667396?text=Hi MAXX Events 🙏 I am interested in the Seemantham Package. Please share details and availability." class="pkg-cta" target="_blank">📱 WhatsApp to Enquire</a>
+          <a href="https://wa.me/918778667396?text=Hi MAXX Events 🙏 I am interested in the Baby Shower Package. Please share details and availability." class="pkg-cta" target="_blank">📱 WhatsApp to Enquire</a>
         </div>
       </div>
 
@@ -799,7 +801,7 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
         <div class="addon-icon">🎺</div>
         <div class="addon-name">Nadaswaram</div>
         <div class="addon-desc">Traditional nadaswaram and tavil team for an authentic Tamil wedding atmosphere. Coordinated by MAXX with experienced musicians. Available for muhurtham, processions and welcoming moments.</div>
-        <div class="addon-avail">Weddings · Seemantham · Upanayanam</div>
+        <div class="addon-avail">Weddings · Baby Shower · Upanayanam</div>
       </div>
 
       <div class="addon-card">
@@ -948,50 +950,65 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
   <div class="section-max">
     <div class="section-eyebrow">Our work</div>
     <h2 class="section-title">EVENTS WE HAVE CREATED</h2>
-    <p class="section-sub">Real events. Real families. Real moments across South Tamil Nadu.</p>
+    <p class="section-sub">Real events. Real families. Real moments — all in Madurai.</p>
     <div class="portfolio-grid">
+
       <div class="portfolio-card">
-        <div class="portfolio-img">🌸</div>
-        <div class="portfolio-overlay">
-          <div class="portfolio-type">Seemantham</div>
-          <div class="portfolio-name">Baby Shower · Madurai</div>
-        </div>
-      </div>
-      <div class="portfolio-card">
-        <div class="portfolio-img">💒</div>
+        <div class="portfolio-img"><img src="images/portfolio-1.jpg" alt="Tamil Wedding Stage Madurai"></div>
         <div class="portfolio-overlay">
           <div class="portfolio-type">Wedding</div>
           <div class="portfolio-name">Tamil Wedding · Madurai</div>
         </div>
       </div>
+
       <div class="portfolio-card">
-        <div class="portfolio-img">⛪</div>
+        <div class="portfolio-img"><img src="images/portfolio-2.jpg" alt="Grand Reception Madurai"></div>
         <div class="portfolio-overlay">
-          <div class="portfolio-type">Christian Wedding</div>
-          <div class="portfolio-name">Church Ceremony · South TN</div>
+          <div class="portfolio-type">Reception</div>
+          <div class="portfolio-name">Grand Reception · Madurai</div>
         </div>
       </div>
+
       <div class="portfolio-card">
-        <div class="portfolio-img">🎂</div>
+        <div class="portfolio-img"><img src="images/portfolio-3.jpg" alt="Luxury Wedding Madurai"></div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-type">Wedding</div>
+          <div class="portfolio-name">Luxury Wedding · Madurai</div>
+        </div>
+      </div>
+
+      <div class="portfolio-card">
+        <div class="portfolio-img"><img src="images/portfolio-4.jpg" alt="Elegant Reception Madurai"></div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-type">Reception</div>
+          <div class="portfolio-name">Elegant Reception · Madurai</div>
+        </div>
+      </div>
+
+      <div class="portfolio-card">
+        <div class="portfolio-img"><img src="images/portfolio-5.jpg" alt="Engagement Madurai"></div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-type">Engagement</div>
+          <div class="portfolio-name">Nichayathartham · Madurai</div>
+        </div>
+      </div>
+
+      <div class="portfolio-card">
+        <div class="portfolio-img"><img src="images/portfolio-6.jpg" alt="Baby Shower Traditional Madurai"></div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-type">Baby Shower</div>
+          <div class="portfolio-name">Valaikappu Ceremony · Madurai</div>
+        </div>
+      </div>
+
+      <div class="portfolio-card">
+        <div class="portfolio-img"><img src="images/portfolio-7.jpg" alt="1st Birthday Madurai"></div>
         <div class="portfolio-overlay">
           <div class="portfolio-type">Birthday</div>
           <div class="portfolio-name">1st Birthday · Madurai</div>
         </div>
       </div>
-      <div class="portfolio-card">
-        <div class="portfolio-img">💍</div>
-        <div class="portfolio-overlay">
-          <div class="portfolio-type">Engagement</div>
-          <div class="portfolio-name">Nichayathartham · Dindigul</div>
-        </div>
-      </div>
-      <div class="portfolio-card">
-        <div class="portfolio-img">🎉</div>
-        <div class="portfolio-overlay">
-          <div class="portfolio-type">Surprise Event</div>
-          <div class="portfolio-name">Anniversary Surprise · Madurai</div>
-        </div>
-      </div>
+
     </div>
     <div style="text-align:center;margin-top:28px">
       <a href="https://www.instagram.com/maxxeventsplanners" class="btn-outline" target="_blank">See Full Portfolio on Instagram →</a>
@@ -1008,14 +1025,14 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
     <div class="reviews-grid">
       <div class="review-card">
         <div class="review-stars">★★★★★</div>
-        <div class="review-text">"They sent us the AI preview of our seemantham decoration one week before. We cried when we saw it — it was exactly what we imagined. On the day it was perfect. Every single detail."</div>
+        <div class="review-text">"They sent us the AI preview of our baby shower decoration one week before. We cried when we saw it — it was exactly what we imagined. On the day it was perfect. Every single detail."</div>
         <div class="review-author">Priya Suresh</div>
-        <div class="review-event">Seemantham · Madurai</div>
+        <div class="review-event">Baby Shower · Madurai</div>
       </div>
       <div class="review-card">
         <div class="review-stars">★★★★★</div>
         <div class="review-text">"Vijay handled everything — decoration, photography, vendors, coordination. We didn't have to make a single call on the wedding day. Just enjoyed our celebration. Truly A to Z service."</div>
-        <div class="review-author">Karthik & Divya</div>
+        <div class="review-author">Karthik &amp; Divya</div>
         <div class="review-event">Wedding · Madurai</div>
       </div>
       <div class="review-card">
@@ -1023,6 +1040,30 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
         <div class="review-text">"We are based in Dubai. MAXX showed us the decoration preview on video call and we approved everything from abroad. The event was live streamed. The reel arrived next morning. Incredible service."</div>
         <div class="review-author">Rajesh Family</div>
         <div class="review-event">Wedding · Coordinated from Dubai</div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"The cold pyro sparks entry was beyond anything we expected. Everyone in the hall went silent when we walked in. MAXX planned every moment — from the car decoration to the stage entry. Worth every rupee."</div>
+        <div class="review-author">Arun &amp; Meenakshi</div>
+        <div class="review-event">Wedding Reception · Madurai</div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"My daughter's 1st birthday was a dream. The balloon arch, the cake table, the photography — everything was perfect. The highlight reel arrived the next morning and all our relatives in Chennai were sharing it immediately."</div>
+        <div class="review-author">Deepa Krishnamurthy</div>
+        <div class="review-event">1st Birthday · Madurai</div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"We gave MAXX full freedom and they delivered something magical. The AI preview showed us exactly what the mandap would look like — we changed the flower colours twice and they updated it same day. No other planner does this."</div>
+        <div class="review-author">Senthil &amp; Kavitha</div>
+        <div class="review-event">Tamil Wedding · Madurai</div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"Our engagement was small but MAXX made it feel grand. The floral arch, the photography, the reel — it looked like a big budget wedding. They work within your budget and never cut corners. Highly recommend."</div>
+        <div class="review-author">Muthu &amp; Saranya</div>
+        <div class="review-event">Engagement · Madurai</div>
       </div>
     </div>
     <div style="text-align:center;margin-top:28px">
@@ -1077,15 +1118,35 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
     <h2 class="section-title">CITIES WE SERVE</h2>
     <p class="section-sub">Growing across all of South Tamil Nadu. Your city. Our team.</p>
     <div class="cities-grid">
-      <div class="city-pill"><div class="city-name">Madurai</div><div class="city-note">Home base · Live now</div></div>
-      <div class="city-pill"><div class="city-name">Dindigul</div><div class="city-note">67km · Active</div></div>
-      <div class="city-pill"><div class="city-name">Tirunelveli</div><div class="city-note">Nellai · Active</div></div>
-      <div class="city-pill"><div class="city-name">Thoothukudi</div><div class="city-note">NRI city · Active</div></div>
-      <div class="city-pill"><div class="city-name">Nagercoil</div><div class="city-note">Kanyakumari · Active</div></div>
+      <div class="city-pill"><div class="city-name">Madurai</div><div class="city-note">Home base ✦</div></div>
+      <div class="city-pill"><div class="city-name">Chennai</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Coimbatore</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Trichy</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Salem</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Tirunelveli</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Thoothukudi</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Nagercoil</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Dindigul</div><div class="city-note">Active</div></div>
       <div class="city-pill"><div class="city-name">Virudhunagar</div><div class="city-note">Active</div></div>
-      <div class="city-pill"><div class="city-name">Theni</div><div class="city-note">Expanding</div></div>
-      <div class="city-pill"><div class="city-name">Sivagangai</div><div class="city-note">Expanding</div></div>
-      <div class="city-pill"><div class="city-name">Ramanathapuram</div><div class="city-note">Expanding</div></div>
+      <div class="city-pill"><div class="city-name">Erode</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Tirupur</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Vellore</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Thanjavur</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Kumbakonam</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Theni</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Sivagangai</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Ramanathapuram</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Sivakasi</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Karur</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Namakkal</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Pudukkottai</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Aruppukottai</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Kanchipuram</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Tiruvannamalai</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Cuddalore</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Nagapattinam</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Villupuram</div><div class="city-note">Active</div></div>
+      <div class="city-pill"><div class="city-name">Ooty / Nilgiris</div><div class="city-note">Active</div></div>
       <div class="city-pill"><div class="city-name">NRI / Abroad</div><div class="city-note">Remote coordination</div></div>
     </div>
   </div>
@@ -1140,7 +1201,7 @@ footer{background:var(--charcoal);border-top:1px solid var(--mid);padding:40px 5
           <option>Wedding</option>
           <option>Reception</option>
           <option>Engagement</option>
-          <option>Seemantham / Valaikappu</option>
+          <option>Baby Shower</option>
           <option>Birthday</option>
           <option>1st Birthday</option>
           <option>Housewarming</option>
