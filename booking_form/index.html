@@ -46,6 +46,25 @@ const BUDGET_RANGES = [
   "₹5,00,000+",
 ];
 
+const HALDI_BUDGET_RANGES = [
+  "₹50,000 – ₹1,50,000",
+  "₹1,50,000 – ₹2,50,000",
+  "₹2,50,000 – ₹3,50,000",
+  "₹3,50,000 – ₹4,50,000",
+  "₹4,50,000 – ₹5,50,000",
+  "₹5,50,000 – ₹6,50,000",
+  "₹6,50,000 – ₹7,50,000",
+  "₹7,50,000 – ₹8,50,000",
+  "₹8,50,000 – ₹9,50,000",
+  "₹9,50,000 – ₹10,50,000",
+  "₹10,50,000 – ₹11,50,000",
+  "₹11,50,000 – ₹12,50,000",
+  "₹12,50,000 – ₹13,50,000",
+  "₹13,50,000 – ₹14,50,000",
+  "₹14,50,000 – ₹15,00,000",
+  "₹15,00,000+",
+];
+
 const VENUE_TYPES = [
   { id: "hall", label: "🏛️ Marriage Hall", sub: "AC / Non-AC hall" },
   { id: "mandapam", label: "🛕 Kalyana Mandapam", sub: "Traditional mandapam" },
@@ -191,7 +210,7 @@ const getServicesForEvent = (eventId) => {
   return filtered;
 };
 
-const steps = ["Details", "Venue", "Event", "Services", "Food", "Review"];
+const steps = ["Event", "Details", "Venue", "Services", "Food", "Review"];
 
 const labelStyle = {
   display:"block", fontSize:10.5, fontWeight:700,
@@ -255,13 +274,24 @@ function App() {
     venueType: "", venueNote: "",
     eventType: "", selected: {},
     nonVegCount: "", vegCount: "", notes: "",
+    customBudget: "",
   });
   const [submitted, setSubmitted] = useState(false);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
   const setEventType = (id) => {
-    setForm(f => ({ ...f, eventType: id, selected: {} }));
+    setForm(f => {
+      const newRanges = id === "haldi" ? HALDI_BUDGET_RANGES : BUDGET_RANGES;
+      const budgetStillValid = newRanges.includes(f.budget);
+      return {
+        ...f,
+        eventType: id,
+        selected: {},
+        budget: budgetStillValid ? f.budget : "",
+        customBudget: budgetStillValid ? f.customBudget : "",
+      };
+    });
   };
 
   const toggleService = (cat, item) => {
@@ -280,6 +310,10 @@ function App() {
   const isSelected = (cat, item) => (form.selected[cat] || []).includes(item);
   const totalSelected = Object.values(form.selected).flat().length;
   const filteredServices = form.eventType ? getServicesForEvent(form.eventType) : {};
+  const budgetRanges = form.eventType === "haldi" ? HALDI_BUDGET_RANGES : BUDGET_RANGES;
+  const budgetDisplay = form.budget === "₹15,00,000+" && form.customBudget
+    ? `₹${form.customBudget}`
+    : form.budget;
 
   const buildWhatsApp = () => {
     const selectedEvent = EVENT_TYPES.find(e => e.id === form.eventType);
@@ -313,7 +347,7 @@ function App() {
       `📍 Location     : ${form.location}`,
       `🏛️ Venue Type   : ${selectedVenue?.label || form.venueType}`,
       form.venueNote ? `🏠 Venue Name   : ${form.venueNote}` : null,
-      `💰 Budget       : ${form.budget}`,
+      `💰 Budget       : ${budgetDisplay}`,
       ``,
       `✅ *SELECTED SERVICES* (${totalSelected} items)`,
       `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
@@ -334,9 +368,10 @@ function App() {
   };
 
   const canNext = () => {
-    if (step === 0) return form.name && form.phone && form.date && form.location && form.budget;
-    if (step === 1) return form.venueType;
-    if (step === 2) return form.eventType;
+    if (step === 0) return !!form.eventType;
+    if (step === 1) return form.name && form.phone && form.date && form.location && form.budget &&
+      (form.budget !== "₹15,00,000+" || form.customBudget.trim());
+    if (step === 2) return !!form.venueType;
     if (step === 3) return totalSelected > 0;
     if (step === 4) return form.nonVegCount || form.vegCount;
     return true;
@@ -357,7 +392,7 @@ function App() {
             <div style={{ fontSize:10, color:GOLD, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:3 }}>Direct Contact</div>
             <div style={{ fontSize:15, fontWeight:700, color:NAVY }}>📱 +91 87786 67396</div>
           </div>
-          <button onClick={() => { setSubmitted(false); setStep(0); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},nonVegCount:"",vegCount:"",notes:"" }); }}
+          <button onClick={() => { setSubmitted(false); setStep(0); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},nonVegCount:"",vegCount:"",notes:"",customBudget:"" }); }}
             style={{ background:NAVY, color:"#fff", border:"none", borderRadius:8, padding:"11px 28px", fontSize:14, fontWeight:600, cursor:"pointer" }}>
             New Enquiry
           </button>
@@ -414,8 +449,27 @@ function App() {
 
       <div style={{ padding:18, maxWidth:520, margin:"0 auto" }}>
 
-        {/* STEP 0 — DETAILS */}
+        {/* STEP 0 — EVENT TYPE */}
         {step === 0 && (
+          <div>
+            <StepTitle icon="🎊" title="Event Type" sub="Select your event first — we'll tailor everything for you" />
+            <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
+              {EVENT_TYPES.map(e => (
+                <button key={e.id} onClick={() => setEventType(e.id)}
+                  style={{ background:form.eventType===e.id ? NAVY:"#fff", color:form.eventType===e.id ? "#fff":NAVY, border:`2px solid ${form.eventType===e.id ? GOLD:"#dde2f0"}`, borderRadius:10, padding:"12px 16px", fontSize:13, fontWeight:600, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", justifyContent:"space-between", transition:"all 0.2s" }}>
+                  <div>
+                    <div>{e.label}</div>
+                    <div style={{ fontSize:10, color:form.eventType===e.id ? "#aabbdd":"#889", marginTop:2, fontWeight:400 }}>{e.sub}</div>
+                  </div>
+                  {form.eventType===e.id && <span style={{ color:GOLD, fontSize:18 }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 1 — DETAILS (budget dynamic based on event type) */}
+        {step === 1 && (
           <div>
             <StepTitle icon="📋" title="Your Details" sub="Fill in your basic info to get started" />
             <Field label="Your Name *" value={form.name} onChange={v => set("name",v)} placeholder="Full name" />
@@ -425,17 +479,38 @@ function App() {
             <Field label="Event City / Location *" value={form.location} onChange={v => set("location",v)} placeholder="e.g. Chengalpet, Chennai" />
             <div style={{ marginBottom:6 }}>
               <label style={labelStyle}>Budget Range *</label>
+              {form.eventType === "haldi" && (
+                <div style={{ background:"#fff8e6", border:`1px solid ${GOLD}`, borderRadius:8, padding:"8px 12px", marginBottom:10, fontSize:11, color:"#7a5c00" }}>
+                  🌿 Haldi packages start from <strong>₹50,000</strong> — up to ₹15L shown below
+                </div>
+              )}
               <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
-                {BUDGET_RANGES.map(b => (
-                  <RadioPill key={b} label={b} selected={form.budget===b} onClick={() => set("budget",b)} />
+                {budgetRanges.map(b => (
+                  <RadioPill key={b} label={b} selected={form.budget===b} onClick={() => { set("budget",b); if (b !== "₹15,00,000+") set("customBudget",""); }} />
                 ))}
               </div>
+              {form.budget === "₹15,00,000+" && (
+                <div style={{ marginTop:10 }}>
+                  <label style={labelStyle}>Enter Your Budget Amount *</label>
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <span style={{ fontSize:14, fontWeight:700, color:NAVY }}>₹</span>
+                    <input
+                      type="text"
+                      value={form.customBudget}
+                      onChange={e => set("customBudget", e.target.value)}
+                      placeholder="e.g. 18,00,000"
+                      style={{ flex:1, border:"1.5px solid #C9A84C", borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, outline:"none", fontFamily:"inherit", background:"#fffdf5" }}
+                    />
+                  </div>
+                  <div style={{ fontSize:10, color:"#889", marginTop:4 }}>We'll plan a custom package matching your vision</div>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* STEP 1 — VENUE */}
-        {step === 1 && (
+        {/* STEP 2 — VENUE */}
+        {step === 2 && (
           <div>
             <StepTitle icon="🏛️" title="Venue Type" sub="Where will the event be held?" />
             <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
@@ -455,25 +530,6 @@ function App() {
               <input value={form.venueNote} onChange={e => set("venueNote",e.target.value)}
                 placeholder="e.g. Sri Murugan Kalyana Mandapam"
                 style={{ width:"100%", border:"1.5px solid #dde2f0", borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, outline:"none", fontFamily:"inherit", boxSizing:"border-box", background:"#fff" }} />
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2 — EVENT TYPE */}
-        {step === 2 && (
-          <div>
-            <StepTitle icon="🎊" title="Event Type" sub="Select your event — services will be tailored for you" />
-            <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
-              {EVENT_TYPES.map(e => (
-                <button key={e.id} onClick={() => setEventType(e.id)}
-                  style={{ background:form.eventType===e.id ? NAVY:"#fff", color:form.eventType===e.id ? "#fff":NAVY, border:`2px solid ${form.eventType===e.id ? GOLD:"#dde2f0"}`, borderRadius:10, padding:"12px 16px", fontSize:13, fontWeight:600, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", justifyContent:"space-between", transition:"all 0.2s" }}>
-                  <div>
-                    <div>{e.label}</div>
-                    <div style={{ fontSize:10, color:form.eventType===e.id ? "#aabbdd":"#889", marginTop:2, fontWeight:400 }}>{e.sub}</div>
-                  </div>
-                  {form.eventType===e.id && <span style={{ color:GOLD, fontSize:18 }}>✓</span>}
-                </button>
-              ))}
             </div>
           </div>
         )}
@@ -550,7 +606,7 @@ function App() {
               {form.personName && <ReviewRow k="Person's Name" v={form.personName} />}
               <ReviewRow k="Event Date" v={form.date} />
               <ReviewRow k="Location" v={form.location} />
-              <ReviewRow k="Budget" v={form.budget} />
+              <ReviewRow k="Budget" v={budgetDisplay} />
             </ReviewCard>
             <ReviewCard label="🏛️ Venue & Event">
               <ReviewRow k="Event Type" v={EVENT_TYPES.find(e => e.id===form.eventType)?.label || "—"} />
