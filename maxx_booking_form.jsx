@@ -1,0 +1,599 @@
+import { useState } from "react";
+
+const GOLD = "#C9A84C";
+const NAVY = "#0d1b4b";
+const NAVY2 = "#111d45";
+const WA_NUMBER = "918778667396";
+
+const EVENT_TYPES = [
+  { id: "puberty", label: "🌸 Puberty Ceremony", sub: "Manjal Neerattu Vizha" },
+  { id: "wedding", label: "💍 Wedding / Reception", sub: "Full wedding or reception" },
+  { id: "engagement", label: "💑 Engagement", sub: "Ring ceremony & celebration" },
+  { id: "haldi", label: "🌿 Haldi & Mehndi", sub: "Pre-wedding Haldi / Mehndi function" },
+  { id: "birthday", label: "🎂 Birthday", sub: "Kids or adult birthday party" },
+  { id: "other", label: "🎊 Other Event", sub: "Corporate, naming ceremony, etc." },
+];
+
+const BUDGET_RANGES = [
+  "₹1,00,000 – ₹1,50,000",
+  "₹1,50,000 – ₹2,00,000",
+  "₹2,00,000 – ₹2,50,000",
+  "₹2,50,000 – ₹3,00,000",
+  "₹3,00,000 – ₹3,50,000",
+  "₹3,50,000 – ₹4,00,000",
+  "₹4,00,000 – ₹5,00,000",
+  "₹5,00,000+",
+];
+
+const VENUE_TYPES = [
+  { id: "hall", label: "🏛️ Marriage Hall", sub: "AC / Non-AC hall" },
+  { id: "mandapam", label: "🛕 Kalyana Mandapam", sub: "Traditional mandapam" },
+  { id: "outdoor", label: "🌳 Outdoor / Open Space", sub: "Garden, terrace, ground" },
+  { id: "hotel", label: "🏨 Hotel / Banquet", sub: "Hotel banquet hall" },
+  { id: "own", label: "🏠 Own Venue / Home", sub: "Client's own property" },
+  { id: "tbd", label: "❓ Not Decided Yet", sub: "Need venue suggestion" },
+];
+
+const FOOD_COUNTS = ["Below 50","50 – 100","100 – 150","150 – 200","200 – 250","250 – 300","300 – 400","400+"];
+
+// ALL services with event type tags
+// tags: which event types show this item
+const ALL_SERVICES = {
+  "🎀 Decoration": [
+    { item: "Stage / Mandap Decoration",     tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Floral Decoration",              tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Backdrop Decoration",            tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Balloon Decoration",             tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Walkway / Flower Panthal",       tags: ["puberty","wedding","engagement","other"] },
+    { item: "Welcome Board / Name Board",     tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Plate & Table Decoration",       tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Tent / Shamiana Setup",          tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Car Decoration",                 tags: ["wedding","engagement","other"] },
+    { item: "Flower Car / Chariot Entry",     tags: ["wedding","other"] },
+    { item: "Haldi Stage Setup",              tags: ["haldi","wedding","puberty"] },
+    { item: "Mehndi Seating Decoration",      tags: ["haldi","wedding"] },
+  ],
+  "💐 Garland & Floral": [
+    { item: "Bride / Groom Garland (Malai) Set", tags: ["wedding","engagement","other"] },
+    { item: "Floral Jewellery for Bride / Girl",  tags: ["puberty","wedding","engagement","other"] },
+    { item: "Flower Crown",                        tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Garland for Family (Parents Set)",    tags: ["puberty","wedding","engagement","other"] },
+    { item: "Flower Petal Shower Setup",           tags: ["puberty","wedding","engagement","other"] },
+    { item: "Fresh Flower Basket",                 tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Banana Stem & Traditional Decor",     tags: ["puberty","wedding","haldi","other"] },
+  ],
+  "📸 Photography & Video": [
+    { item: "Traditional Photography",             tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Traditional Videography",             tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Candid Photography",                  tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Drone Photography / Videography",     tags: ["wedding","engagement","birthday","other"] },
+    { item: "Pre-Event / Pre-Wedding Shoot",       tags: ["wedding","engagement","other"] },
+    { item: "Photo Album (Flush Mount)",           tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Edited Highlight Video (Cinematic)",  tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Reels / Social Media Edit",           tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Complimentary Photo Frame",           tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Slideshow & Projection Screen",       tags: ["wedding","engagement","birthday","other"] },
+  ],
+  "🍽️ Catering & Food": [
+    { item: "Welcome Drink",                       tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Non-Veg Catering",                    tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Veg Catering",                        tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Outdoor / Tent Catering",             tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Buffet Setup & Service Staff",        tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Waiters / Service Boys",              tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Water Bottle & Refreshments",         tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+  ],
+  "🍿 Live Stalls": [
+    { item: "Popcorn Stall",                       tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Spring Potato Stall",                 tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Kulfi Stall",                         tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Ice Cream / Dessert Stall",           tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Juice / Mocktail Counter",            tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Chaat / Pani Puri Stall",             tags: ["wedding","engagement","haldi","birthday","other"] },
+    { item: "Cotton Candy Stall",                  tags: ["birthday","other"] },
+    { item: "Live Cooking Counter",                tags: ["wedding","engagement","other"] },
+  ],
+  "🎉 Entertainment & Games": [
+    { item: "360° Video Booth",                    tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Live Photo Booth",                    tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Balloon Shooting Game",               tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "VR Games",                            tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Bouncy Castle / Kids Play Area",      tags: ["birthday","other"] },
+    { item: "Caricature Artist",                   tags: ["wedding","engagement","birthday","other"] },
+    { item: "Temporary Tattoo Artist",             tags: ["wedding","engagement","birthday","other"] },
+    { item: "Face Painting",                       tags: ["birthday","other"] },
+    { item: "Magic Show",                          tags: ["birthday","other"] },
+    { item: "Anchor / Emcee",                      tags: ["puberty","wedding","engagement","birthday","other"] },
+  ],
+  "💄 Makeup & Styling": [
+    { item: "Bridal / Event Makeup",               tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Hair Styling",                        tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Saree Draping",                       tags: ["puberty","wedding","engagement","haldi","other"] },
+    { item: "Grooming for Groom",                  tags: ["wedding","engagement","other"] },
+    { item: "Mehendi Artist",                      tags: ["haldi","wedding","engagement","other"] },
+    { item: "Haldi Application Setup",             tags: ["haldi","wedding","puberty"] },
+  ],
+  "🎁 Gifts & Thambulam": [
+    { item: "Thambulam – Coconut & Betel Leaf",   tags: ["puberty","wedding","engagement","other"] },
+    { item: "Thambulam – Full Traditional Set",   tags: ["puberty","wedding","other"] },
+    { item: "Return Gift Bags",                    tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Small Gift Packing",                  tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Haldi / Turmeric Gift Packing",       tags: ["haldi","wedding","puberty"] },
+    { item: "Guest Book / Memory Book",            tags: ["wedding","engagement","birthday","other"] },
+  ],
+  "💡 Lighting & Effects": [
+    { item: "Extra Hall Lighting (LED / Truss)",   tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Stage Lighting",                      tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "LED Dance Floor",                     tags: ["wedding","engagement","birthday","other"] },
+    { item: "Smoke Machine / Fog Effect",          tags: ["wedding","engagement","birthday","other"] },
+    { item: "Fireworks / Sparklers",               tags: ["wedding","engagement","birthday","other"] },
+    { item: "Cold Pyro / Stage Fire Effect",       tags: ["wedding","engagement","other"] },
+    { item: "Confetti Cannon",                     tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Butterfly Release",                   tags: ["puberty","wedding","engagement","other"] },
+  ],
+  "🎵 Music & Sound": [
+    { item: "DJ & Sound System",                   tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Live Band / Music",                   tags: ["wedding","engagement","birthday","other"] },
+    { item: "Sound System Only",                   tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Nadaswaram / Traditional Music",      tags: ["puberty","wedding","haldi","other"] },
+  ],
+  "📋 Planning & Support": [
+    { item: "On-site Event Coordinator",           tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Seating Arrangement",                 tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Security Staff",                      tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Parking Management",                  tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Generator Backup",                    tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Projector & Screen Setup",            tags: ["wedding","engagement","birthday","other"] },
+  ],
+  "💌 Invitations": [
+    { item: "Digital Invitation Card",             tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Printed Invitation Card",             tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+  ],
+  "🚗 Transportation": [
+    { item: "Guest Pickup & Drop",                 tags: ["puberty","wedding","engagement","haldi","birthday","other"] },
+    { item: "Tempo Traveller / Bus Booking",       tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Airport / Station Pickup",            tags: ["wedding","engagement","other"] },
+    { item: "Bridal Car Arrangement",              tags: ["wedding","engagement","other"] },
+  ],
+  "🏨 Accommodation": [
+    { item: "Hotel Room Booking",                  tags: ["puberty","wedding","engagement","birthday","other"] },
+    { item: "Bridal Suite Arrangement",            tags: ["wedding","engagement","other"] },
+    { item: "Room Decoration",                     tags: ["wedding","engagement","birthday","other"] },
+    { item: "Luggage Handling",                    tags: ["wedding","engagement","other"] },
+  ],
+};
+
+// Filter services by selected event type
+const getServicesForEvent = (eventId) => {
+  const filtered = {};
+  Object.entries(ALL_SERVICES).forEach(([cat, items]) => {
+    const visible = items.filter(i => i.tags.includes(eventId));
+    if (visible.length > 0) filtered[cat] = visible.map(i => i.item);
+  });
+  return filtered;
+};
+
+const steps = ["Details", "Venue", "Event", "Services", "Food", "Review"];
+
+export default function App() {
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({
+    name: "", phone: "", personName: "",
+    date: "", location: "", budget: "",
+    venueType: "", venueNote: "",
+    eventType: "", selected: {},
+    nonVegCount: "", vegCount: "", notes: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+
+  // When event type changes, clear selected services
+  const setEventType = (id) => {
+    setForm(f => ({ ...f, eventType: id, selected: {} }));
+  };
+
+  const toggleService = (cat, item) => {
+    setForm(f => {
+      const cur = f.selected[cat] || [];
+      return {
+        ...f,
+        selected: {
+          ...f.selected,
+          [cat]: cur.includes(item) ? cur.filter(i => i !== item) : [...cur, item],
+        },
+      };
+    });
+  };
+
+  const isSelected = (cat, item) => (form.selected[cat] || []).includes(item);
+  const totalSelected = Object.values(form.selected).flat().length;
+  const filteredServices = form.eventType ? getServicesForEvent(form.eventType) : {};
+
+  const buildWhatsApp = () => {
+    const selectedEvent = EVENT_TYPES.find(e => e.id === form.eventType);
+    const selectedVenue = VENUE_TYPES.find(v => v.id === form.venueType);
+    const personLabel =
+      form.eventType === "puberty" ? "Girl's Name" :
+      form.eventType === "wedding" ? "Bride / Groom Name" :
+      form.eventType === "birthday" ? "Birthday Person" : "Person's Name";
+
+    const servicesBlock = Object.entries(form.selected)
+      .filter(([, items]) => items.length > 0)
+      .map(([cat, items]) => `  ${cat}\n${items.map(i => `    ➤ ${i}`).join("\n")}`)
+      .join("\n\n");
+
+    const msg = [
+      `╔══════════════════════════╗`,
+      `      🌟 MAXX EVENTS 🌟`,
+      `      New Quote Request`,
+      `╚══════════════════════════╝`,
+      ``,
+      `📋 *CLIENT DETAILS*`,
+      `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
+      `👤 Name         : ${form.name}`,
+      `📱 WhatsApp     : ${form.phone}`,
+      `🎂 ${personLabel.padEnd(14)}: ${form.personName || "—"}`,
+      ``,
+      `📅 *EVENT INFO*`,
+      `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
+      `🎊 Event Type   : ${selectedEvent?.label || form.eventType}`,
+      `📅 Event Date   : ${form.date}`,
+      `📍 Location     : ${form.location}`,
+      `🏛️ Venue Type   : ${selectedVenue?.label || form.venueType}`,
+      form.venueNote ? `🏠 Venue Name   : ${form.venueNote}` : null,
+      `💰 Budget       : ${form.budget}`,
+      ``,
+      `✅ *SELECTED SERVICES* (${totalSelected} items)`,
+      `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
+      servicesBlock || "  No services selected",
+      ``,
+      `🍽️ *FOOD COUNT*`,
+      `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
+      `🍖 Non-Veg      : ${form.nonVegCount || "Not specified"}`,
+      `🥦 Veg          : ${form.vegCount || "Not specified"}`,
+      form.notes ? `\n📝 *SPECIAL NOTES*\n┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄\n${form.notes}` : null,
+      ``,
+      `━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `_Sent via MAXX Events Booking Form_`,
+    ].filter(v => v !== null).join("\n");
+
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
+    setSubmitted(true);
+  };
+
+  const canNext = () => {
+    if (step === 0) return form.name && form.phone && form.date && form.location && form.budget;
+    if (step === 1) return form.venueType;
+    if (step === 2) return form.eventType;
+    if (step === 3) return totalSelected > 0;
+    if (step === 4) return form.nonVegCount || form.vegCount;
+    return true;
+  };
+
+  const progress = (step / (steps.length - 1)) * 100;
+
+  if (submitted) {
+    return (
+      <div style={{ minHeight:"100vh", background:"#f0f3fa", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+        <div style={{ background:"#fff", borderRadius:16, padding:36, textAlign:"center", maxWidth:380, width:"100%", boxShadow:"0 8px 40px rgba(13,27,75,0.12)" }}>
+          <div style={{ fontSize:52, marginBottom:10 }}>🎉</div>
+          <div style={{ fontFamily:"Georgia,serif", fontSize:22, fontWeight:700, color:NAVY, marginBottom:8 }}>Quote Sent!</div>
+          <p style={{ color:"#556", fontSize:13, lineHeight:1.8, marginBottom:22 }}>
+            Your request has been sent to MAXX Events on WhatsApp. We'll reply with your personalised package price soon!
+          </p>
+          <div style={{ background:"#f0f3fa", borderRadius:10, padding:"12px 16px", marginBottom:20 }}>
+            <div style={{ fontSize:10, color:GOLD, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:3 }}>Direct Contact</div>
+            <div style={{ fontSize:15, fontWeight:700, color:NAVY }}>📱 +91 87786 67396</div>
+          </div>
+          <button onClick={() => { setSubmitted(false); setStep(0); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},nonVegCount:"",vegCount:"",notes:"" }); }}
+            style={{ background:NAVY, color:"#fff", border:"none", borderRadius:8, padding:"11px 28px", fontSize:14, fontWeight:600, cursor:"pointer" }}>
+            New Enquiry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight:"100vh", background:"#f0f3fa", fontFamily:"'Inter',Arial,sans-serif" }}>
+
+      {/* HEADER */}
+      <div style={{ background:NAVY, padding:"14px 20px", display:"flex", alignItems:"center", gap:13 }}>
+        <div style={{ width:46, height:46, borderRadius:"50%", border:`2px solid ${GOLD}`, background:NAVY, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <div style={{ fontFamily:"Georgia,serif", fontSize:14, fontWeight:900, lineHeight:1 }}>
+            <span style={{ color:"#F8F4EE" }}>MA</span><span style={{ color:GOLD }}>XX</span>
+          </div>
+          <div style={{ width:20, height:1, background:GOLD, margin:"2px auto" }} />
+          <div style={{ fontSize:4, letterSpacing:"0.08em", color:GOLD, textTransform:"uppercase" }}>Events</div>
+        </div>
+        <div>
+          <div style={{ fontFamily:"Georgia,serif", fontSize:19, fontWeight:900, color:"#F8F4EE", letterSpacing:2 }}>
+            MA<span style={{ color:GOLD }}>XX</span> EVENTS
+          </div>
+          <div style={{ fontSize:8.5, color:"#7788bb", letterSpacing:"0.16em", textTransform:"uppercase" }}>Build Your Custom Package</div>
+        </div>
+      </div>
+
+      {/* PROGRESS */}
+      <div style={{ background:NAVY2, padding:"10px 16px 0" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+          {steps.map((s, i) => (
+            <div key={s} style={{ display:"flex", flexDirection:"column", alignItems:"center", flex:1 }}>
+              <div style={{
+                width:24, height:24, borderRadius:"50%",
+                background: i < step ? GOLD : i === step ? "#fff" : "rgba(255,255,255,0.1)",
+                color: i < step ? NAVY : i === step ? NAVY : "#556",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:10, fontWeight:800, marginBottom:3,
+                border: i === step ? `2px solid ${GOLD}` : "2px solid transparent",
+              }}>
+                {i < step ? "✓" : i + 1}
+              </div>
+              <div style={{ fontSize:8, color: i <= step ? GOLD : "#445", fontWeight: i === step ? 700 : 400, textAlign:"center" }}>{s}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ height:3, background:"rgba(255,255,255,0.08)", borderRadius:2 }}>
+          <div style={{ height:"100%", background:GOLD, borderRadius:2, width:`${progress}%`, transition:"width 0.4s" }} />
+        </div>
+      </div>
+
+      <div style={{ padding:18, maxWidth:520, margin:"0 auto" }}>
+
+        {/* STEP 0 — DETAILS */}
+        {step === 0 && (
+          <div>
+            <StepTitle icon="📋" title="Your Details" sub="Fill in your basic info to get started" />
+            <Field label="Your Name *" value={form.name} onChange={v => set("name",v)} placeholder="Full name" />
+            <Field label="WhatsApp Number *" value={form.phone} onChange={v => set("phone",v)} placeholder="+91 98765 43210" type="tel" />
+            <Field label="Bride / Groom / Girl's Name" value={form.personName} onChange={v => set("personName",v)} placeholder="Name of the person being celebrated" />
+            <Field label="Event Date *" value={form.date} onChange={v => set("date",v)} type="date" />
+            <Field label="Event City / Location *" value={form.location} onChange={v => set("location",v)} placeholder="e.g. Chengalpet, Chennai" />
+            <div style={{ marginBottom:6 }}>
+              <label style={labelStyle}>Budget Range *</label>
+              <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+                {BUDGET_RANGES.map(b => (
+                  <RadioPill key={b} label={b} selected={form.budget===b} onClick={() => set("budget",b)} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 1 — VENUE */}
+        {step === 1 && (
+          <div>
+            <StepTitle icon="🏛️" title="Venue Type" sub="Where will the event be held?" />
+            <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
+              {VENUE_TYPES.map(v => (
+                <button key={v.id} onClick={() => set("venueType",v.id)}
+                  style={{ background:form.venueType===v.id ? NAVY:"#fff", color:form.venueType===v.id ? "#fff":NAVY, border:`2px solid ${form.venueType===v.id ? GOLD:"#dde2f0"}`, borderRadius:10, padding:"12px 16px", fontSize:13, fontWeight:600, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", justifyContent:"space-between", transition:"all 0.2s" }}>
+                  <div>
+                    <div>{v.label}</div>
+                    <div style={{ fontSize:10, color:form.venueType===v.id ? "#aabbdd":"#889", marginTop:2, fontWeight:400 }}>{v.sub}</div>
+                  </div>
+                  {form.venueType===v.id && <span style={{ color:GOLD, fontSize:18 }}>✓</span>}
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop:14 }}>
+              <label style={labelStyle}>Venue Name (optional)</label>
+              <input value={form.venueNote} onChange={e => set("venueNote",e.target.value)}
+                placeholder="e.g. Sri Murugan Kalyana Mandapam"
+                style={{ width:"100%", border:"1.5px solid #dde2f0", borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, outline:"none", fontFamily:"inherit", boxSizing:"border-box", background:"#fff" }} />
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2 — EVENT TYPE */}
+        {step === 2 && (
+          <div>
+            <StepTitle icon="🎊" title="Event Type" sub="Select your event — services will be tailored for you" />
+            <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
+              {EVENT_TYPES.map(e => (
+                <button key={e.id} onClick={() => setEventType(e.id)}
+                  style={{ background:form.eventType===e.id ? NAVY:"#fff", color:form.eventType===e.id ? "#fff":NAVY, border:`2px solid ${form.eventType===e.id ? GOLD:"#dde2f0"}`, borderRadius:10, padding:"12px 16px", fontSize:13, fontWeight:600, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", justifyContent:"space-between", transition:"all 0.2s" }}>
+                  <div>
+                    <div>{e.label}</div>
+                    <div style={{ fontSize:10, color:form.eventType===e.id ? "#aabbdd":"#889", marginTop:2, fontWeight:400 }}>{e.sub}</div>
+                  </div>
+                  {form.eventType===e.id && <span style={{ color:GOLD, fontSize:18 }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3 — SERVICES (filtered by event type) */}
+        {step === 3 && (
+          <div>
+            <StepTitle icon="✅" title="Select Services" sub="Only services for your event are shown — tap to select" />
+
+            {/* Event type reminder badge */}
+            <div style={{ background:NAVY, borderRadius:8, padding:"7px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontSize:12, color:GOLD, fontWeight:700 }}>
+                {EVENT_TYPES.find(e => e.id===form.eventType)?.label}
+              </span>
+              <span style={{ fontSize:10, color:"#667" }}>— showing relevant services only</span>
+            </div>
+
+            {totalSelected > 0 && (
+              <div style={{ background:"#e8f4e8", border:"1px solid #b8ddb8", borderRadius:8, padding:"8px 14px", marginBottom:14, fontSize:12, color:"#2e7d32", fontWeight:600 }}>
+                ✅ {totalSelected} service{totalSelected>1?"s":""} selected
+              </div>
+            )}
+
+            {Object.entries(filteredServices).map(([cat, items]) => (
+              <div key={cat} style={{ marginBottom:18 }}>
+                <div style={{ fontSize:13, fontWeight:800, color:NAVY, paddingBottom:5, borderBottom:`2px solid ${GOLD}`, display:"inline-block", marginBottom:8 }}>
+                  {cat}
+                </div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:7, marginTop:4 }}>
+                  {items.map(item => {
+                    const sel = isSelected(cat, item);
+                    return (
+                      <button key={item} onClick={() => toggleService(cat, item)}
+                        style={{ background:sel ? NAVY:"#fff", color:sel ? "#fff":"#334", border:`1.5px solid ${sel ? GOLD:"#dde2f0"}`, borderRadius:20, padding:"6px 12px", fontSize:11, fontWeight:sel ? 600:400, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:5 }}>
+                        {sel && <span style={{ color:GOLD, fontSize:9 }}>✓</span>}
+                        {item}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* STEP 4 — FOOD */}
+        {step === 4 && (
+          <div>
+            <StepTitle icon="🍽️" title="Food Count" sub="Approximate number of guests for each menu" />
+            <div style={{ marginBottom:20 }}>
+              <label style={labelStyle}>🍖 Non-Veg Guests</label>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+                {FOOD_COUNTS.map(c => <RadioPill key={c} label={c} selected={form.nonVegCount===c} onClick={() => set("nonVegCount",c)} small />)}
+              </div>
+            </div>
+            <div style={{ marginBottom:20 }}>
+              <label style={labelStyle}>🥦 Veg Guests</label>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+                {FOOD_COUNTS.map(c => <RadioPill key={c} label={c} selected={form.vegCount===c} onClick={() => set("vegCount",c)} small />)}
+              </div>
+            </div>
+            <div style={{ marginBottom:6 }}>
+              <label style={labelStyle}>Special Requirements / Notes</label>
+              <textarea value={form.notes} onChange={e => set("notes",e.target.value)}
+                placeholder="e.g. Jain food, specific timing, outdoor setup notes..."
+                style={{ width:"100%", border:"1.5px solid #dde2f0", borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, minHeight:80, resize:"vertical", outline:"none", fontFamily:"inherit", boxSizing:"border-box" }} />
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5 — REVIEW */}
+        {step === 5 && (
+          <div>
+            <StepTitle icon="📤" title="Review & Send" sub="Check everything and send your quote request" />
+
+            <ReviewCard label="👤 Client Details">
+              <ReviewRow k="Name" v={form.name} />
+              <ReviewRow k="WhatsApp" v={form.phone} />
+              {form.personName && <ReviewRow k="Person's Name" v={form.personName} />}
+              <ReviewRow k="Event Date" v={form.date} />
+              <ReviewRow k="Location" v={form.location} />
+              <ReviewRow k="Budget" v={form.budget} />
+            </ReviewCard>
+
+            <ReviewCard label="🏛️ Venue & Event">
+              <ReviewRow k="Event Type" v={EVENT_TYPES.find(e => e.id===form.eventType)?.label || "—"} />
+              <ReviewRow k="Venue Type" v={VENUE_TYPES.find(v => v.id===form.venueType)?.label || "—"} />
+              {form.venueNote && <ReviewRow k="Venue Name" v={form.venueNote} />}
+            </ReviewCard>
+
+            <ReviewCard label={`✅ Services Selected (${totalSelected})`}>
+              {Object.entries(form.selected).filter(([,items]) => items.length>0).map(([cat, items]) => (
+                <div key={cat} style={{ marginBottom:9 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:NAVY, marginBottom:3 }}>{cat}</div>
+                  {items.map(i => <div key={i} style={{ fontSize:11, color:"#445", paddingLeft:10, lineHeight:1.75 }}>• {i}</div>)}
+                </div>
+              ))}
+            </ReviewCard>
+
+            <ReviewCard label="🍽️ Food Count">
+              <ReviewRow k="Non-Veg Guests" v={form.nonVegCount || "—"} />
+              <ReviewRow k="Veg Guests" v={form.vegCount || "—"} />
+              {form.notes && <ReviewRow k="Notes" v={form.notes} />}
+            </ReviewCard>
+
+            <div style={{ background:"#e8f5e8", border:"1px solid #b8ddb8", borderRadius:10, padding:"12px 16px", marginBottom:16, fontSize:12, color:"#2e7d32", lineHeight:1.75 }}>
+              📱 Tapping <strong>Get My Quote</strong> opens WhatsApp and sends your details directly to MAXX Events on <strong>+91 87786 67396</strong>
+            </div>
+
+            <button onClick={buildWhatsApp}
+              style={{ width:"100%", background:"#25D366", border:"none", borderRadius:12, padding:"16px 20px", fontSize:15, fontWeight:800, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:10, boxShadow:"0 4px 16px rgba(37,211,102,0.35)" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Get My Quote on WhatsApp
+            </button>
+          </div>
+        )}
+
+        {/* NAV */}
+        <div style={{ display:"flex", gap:10, marginTop:18 }}>
+          {step > 0 && (
+            <button onClick={() => setStep(s => s-1)}
+              style={{ flex:1, background:"#fff", border:`1.5px solid ${NAVY}`, color:NAVY, borderRadius:10, padding:"12px", fontSize:13, fontWeight:600, cursor:"pointer" }}>
+              ← Back
+            </button>
+          )}
+          {step < steps.length-1 && (
+            <button onClick={() => { if (canNext()) setStep(s => s+1); }}
+              style={{ flex:2, background:canNext() ? NAVY:"#c8cfe0", color:canNext() ? "#fff":"#99a", border:"none", borderRadius:10, padding:"12px", fontSize:14, fontWeight:700, cursor:canNext() ? "pointer":"not-allowed", transition:"all 0.2s" }}>
+              Continue →
+            </button>
+          )}
+        </div>
+
+        <div style={{ textAlign:"center", marginTop:22, paddingBottom:24 }}>
+          <div style={{ fontSize:9.5, color:"#99aacc", letterSpacing:"0.12em", textTransform:"uppercase" }}>
+            MAXX Events &nbsp;·&nbsp; +91 87786 67396
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepTitle({ icon, title, sub }) {
+  return (
+    <div style={{ marginBottom:18 }}>
+      <div style={{ fontSize:26, marginBottom:3 }}>{icon}</div>
+      <div style={{ fontFamily:"Georgia,serif", fontSize:19, fontWeight:700, color:NAVY, marginBottom:2 }}>{title}</div>
+      <div style={{ fontSize:12, color:"#778" }}>{sub}</div>
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, placeholder, type="text" }) {
+  return (
+    <div style={{ marginBottom:13 }}>
+      <label style={labelStyle}>{label}</label>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        style={{ width:"100%", border:"1.5px solid #dde2f0", borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, outline:"none", fontFamily:"inherit", boxSizing:"border-box", background:"#fff" }} />
+    </div>
+  );
+}
+
+function RadioPill({ label, selected, onClick, small }) {
+  return (
+    <button onClick={onClick}
+      style={{ background:selected ? NAVY:"#fff", color:selected ? "#fff":"#334", border:`1.5px solid ${selected ? GOLD:"#dde2f0"}`, borderRadius:20, padding:small ? "5px 11px":"8px 14px", fontSize:small ? 11:12, fontWeight:selected ? 700:400, cursor:"pointer", transition:"all 0.15s" }}>
+      {selected && <span style={{ color:GOLD, marginRight:4, fontSize:9 }}>✓</span>}
+      {label}
+    </button>
+  );
+}
+
+function ReviewCard({ label, children }) {
+  return (
+    <div style={{ border:"1.5px solid #dde2f0", borderRadius:10, marginBottom:12, overflow:"hidden" }}>
+      <div style={{ background:NAVY, padding:"7px 14px", fontSize:10.5, fontWeight:700, color:GOLD, letterSpacing:"0.1em", textTransform:"uppercase" }}>{label}</div>
+      <div style={{ padding:"11px 14px", background:"#fff" }}>{children}</div>
+    </div>
+  );
+}
+
+function ReviewRow({ k, v }) {
+  return (
+    <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:5, gap:10 }}>
+      <span style={{ color:"#778", flexShrink:0 }}>{k}</span>
+      <span style={{ color:NAVY, fontWeight:600, textAlign:"right" }}>{v}</span>
+    </div>
+  );
+}
+
+const labelStyle = {
+  display:"block", fontSize:10.5, fontWeight:700,
+  color:NAVY, textTransform:"uppercase",
+  letterSpacing:"0.1em", marginBottom:7
+};
