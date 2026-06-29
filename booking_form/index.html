@@ -25,6 +25,16 @@ const GOLD = "#C9A84C";
 const NAVY = "#0d1b4b";
 const NAVY2 = "#111d45";
 const WA_NUMBER = "918778667396";
+const SHEETS_URL = ""; // Paste your Google Apps Script web app URL here after deployment
+
+function generateCode() {
+  const n = new Date();
+  const yy = String(n.getFullYear()).slice(2);
+  const mm = String(n.getMonth()+1).padStart(2,"0");
+  const dd = String(n.getDate()).padStart(2,"0");
+  const rand = String(Math.floor(Math.random()*900)+100);
+  return `MX${yy}${mm}${dd}-${rand}`;
+}
 
 const EVENT_TYPES = [
   { id: "puberty", label: "🌸 Puberty Ceremony", sub: "Manjal Neerattu Vizha" },
@@ -81,7 +91,12 @@ const VENUE_TYPES = [
   { id: "tbd", label: "❓ Not Decided Yet", sub: "Need venue suggestion" },
 ];
 
-const FOOD_COUNTS = ["Below 50","50 – 100","100 – 150","150 – 200","200 – 250","250 – 300","300 – 400","400+"];
+const FOOD_COUNTS = [
+  "Below 50","50 – 100","100 – 150","150 – 200",
+  "200 – 250","250 – 300","300 – 400","400 – 500",
+  "500 – 600","600 – 700","700 – 800","800 – 900",
+  "900 – 1000","1000 – 1200","1200 – 1500","1500 – 2000","2000+"
+];
 
 const ALL_SERVICES = {
   "🎀 Decoration": [
@@ -281,7 +296,7 @@ function App() {
     venueType: "", venueNote: "",
     eventType: "", selected: {},
     nonVegCount: "", vegCount: "", notes: "",
-    customBudget: "",
+    customBudget: "", quoteCode: "",
   });
   const [submitted, setSubmitted] = useState(false);
 
@@ -323,6 +338,7 @@ function App() {
     : form.budget;
 
   const buildWhatsApp = () => {
+    const code = generateCode();
     const selectedEvent = EVENT_TYPES.find(e => e.id === form.eventType);
     const selectedVenue = VENUE_TYPES.find(v => v.id === form.venueType);
     const personLabel =
@@ -340,6 +356,8 @@ function App() {
       `      🌟 MAXX EVENTS 🌟`,
       `      New Quote Request`,
       `╚══════════════════════════╝`,
+      ``,
+      `🔖 *Quote Code  : ${code}*`,
       ``,
       `📋 *CLIENT DETAILS*`,
       `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
@@ -370,6 +388,29 @@ function App() {
       `_Sent via MAXX Events Booking Form_`,
     ].filter(v => v !== null).join("\n");
 
+    if (SHEETS_URL) {
+      fetch(SHEETS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteCode: code,
+          name: form.name,
+          phone: form.phone,
+          eventType: selectedEvent?.label || form.eventType,
+          date: form.date,
+          location: form.location,
+          venueType: selectedVenue?.label || form.venueType,
+          venueName: form.venueNote || "",
+          budget: budgetDisplay,
+          servicesCount: totalSelected,
+          nonVegCount: form.nonVegCount || "",
+          vegCount: form.vegCount || "",
+          notes: form.notes || "",
+        })
+      }).catch(() => {});
+    }
+
+    setForm(f => ({ ...f, quoteCode: code }));
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
     setSubmitted(true);
   };
@@ -392,14 +433,19 @@ function App() {
         <div style={{ background:"#fff", borderRadius:16, padding:36, textAlign:"center", maxWidth:380, width:"100%", boxShadow:"0 8px 40px rgba(13,27,75,0.12)" }}>
           <div style={{ fontSize:52, marginBottom:10 }}>🎉</div>
           <div style={{ fontFamily:"Georgia,serif", fontSize:22, fontWeight:700, color:NAVY, marginBottom:8 }}>Quote Sent!</div>
-          <p style={{ color:"#556", fontSize:13, lineHeight:1.8, marginBottom:22 }}>
+          <p style={{ color:"#556", fontSize:13, lineHeight:1.8, marginBottom:16 }}>
             Your request has been sent to MAXX Events on WhatsApp. We'll reply with your personalised package price soon!
           </p>
+          <div style={{ background:"#fffbf0", border:`1.5px solid ${GOLD}`, borderRadius:10, padding:"12px 16px", marginBottom:16 }}>
+            <div style={{ fontSize:10, color:GOLD, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:4 }}>Your Quote Reference</div>
+            <div style={{ fontSize:20, fontWeight:800, color:NAVY, letterSpacing:"0.08em" }}>{form.quoteCode}</div>
+            <div style={{ fontSize:10, color:"#889", marginTop:3 }}>Share this code when contacting us</div>
+          </div>
           <div style={{ background:"#f0f3fa", borderRadius:10, padding:"12px 16px", marginBottom:20 }}>
             <div style={{ fontSize:10, color:GOLD, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:3 }}>Direct Contact</div>
             <div style={{ fontSize:15, fontWeight:700, color:NAVY }}>📱 +91 87786 67396</div>
           </div>
-          <button onClick={() => { setSubmitted(false); setStep(0); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},nonVegCount:"",vegCount:"",notes:"",customBudget:"" }); }}
+          <button onClick={() => { setSubmitted(false); setStep(0); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},nonVegCount:"",vegCount:"",notes:"",customBudget:"",quoteCode:"" }); }}
             style={{ background:NAVY, color:"#fff", border:"none", borderRadius:8, padding:"11px 28px", fontSize:14, fontWeight:600, cursor:"pointer" }}>
             New Enquiry
           </button>

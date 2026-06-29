@@ -248,6 +248,34 @@ export default function App() {
     ? `₹${form.customBudget}`
     : form.budget;
 
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
+
+  const saveToSheet = (budgetDisplay) => {
+    const services = Object.entries(form.selected)
+      .filter(([, items]) => items.length > 0)
+      .map(([cat, items]) => `${cat}: ${items.join(", ")}`)
+      .join(" | ");
+
+    fetch(SHEET_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        name: form.name,
+        phone: form.phone,
+        personName: form.personName,
+        eventType: EVENT_TYPES.find(e => e.id === form.eventType)?.label || form.eventType,
+        date: form.date,
+        location: form.location,
+        budget: budgetDisplay,
+        venueType: VENUE_TYPES.find(v => v.id === form.venueType)?.label || form.venueType,
+        venueNote: form.venueNote,
+        services,
+        nonVegCount: form.nonVegCount,
+        vegCount: form.vegCount,
+        notes: form.notes,
+      }),
+    }).catch(() => {});
+  };
+
   const buildWhatsApp = () => {
     const selectedEvent = EVENT_TYPES.find(e => e.id === form.eventType);
     const selectedVenue = VENUE_TYPES.find(v => v.id === form.venueType);
@@ -296,6 +324,7 @@ export default function App() {
       `_Sent via MAXX Events Booking Form_`,
     ].filter(v => v !== null).join("\n");
 
+    saveToSheet(budgetDisplay);
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
     setSubmitted(true);
   };
