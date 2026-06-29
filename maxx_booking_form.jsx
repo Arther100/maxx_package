@@ -258,6 +258,7 @@ export default function App() {
 
     fetch(SHEET_URL, {
       method: "POST",
+      mode: "no-cors",
       body: JSON.stringify({
         name: form.name,
         phone: form.phone,

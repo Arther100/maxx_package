@@ -25,7 +25,7 @@ const GOLD = "#C9A84C";
 const NAVY = "#0d1b4b";
 const NAVY2 = "#111d45";
 const WA_NUMBER = "918778667396";
-const SHEETS_URL = ""; // Paste your Google Apps Script web app URL here after deployment
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
 
 function generateCode() {
   const n = new Date();
@@ -391,7 +391,7 @@ function App() {
     if (SHEETS_URL) {
       fetch(SHEETS_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        mode: "no-cors",
         body: JSON.stringify({
           quoteCode: code,
           name: form.name,
