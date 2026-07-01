@@ -247,6 +247,7 @@ export default function App() {
   const budgetDisplay = form.budget === "₹15,00,000+" && form.customBudget
     ? `₹${form.customBudget}`
     : form.budget;
+    
 
   const SHEET_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
 

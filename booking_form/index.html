@@ -5,13 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Book Your Event — MAXX Events & Planners</title>
 <meta name="description" content="Build your custom event package with MAXX Events. Select services, get an instant WhatsApp quote.">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', Arial, sans-serif; background: #f0f3fa; }
+:root {
+  --black: #0A0A0A;
+  --gold: #C9A84C;
+  --white: #F8F4EE;
+  --charcoal: #1A1A1A;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', Arial, sans-serif; background: #f0f3fa; }
+
+/* ── SIMPLE LOGO HEADER ── */
+.logo-header{background:var(--charcoal);border-bottom:1px solid rgba(201,168,76,.2);padding:12px 20px;display:flex;align-items:center;justify-content:center}
+.logo-header a{text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.06em;color:var(--white)}
+.logo-text span{color:var(--gold)}
+.logo-sub{font-size:9px;color:rgba(201,168,76,.7);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
 </style>
 </head>
 <body>
+
+<!-- SIMPLE LOGO HEADER -->
+<div class="logo-header">
+  <a href="index.html">
+    <div>
+      <div class="logo-text">MA<span>XX</span> EVENTS</div>
+      <div class="logo-sub">Build Your Custom Package</div>
+    </div>
+  </a>
+</div>
+
 <div id="root"></div>
 
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -410,6 +434,34 @@ function App() {
       }).catch(() => {});
     }
 
+    // Save to localStorage for Bookers Details page
+    try {
+      const bookerData = {
+        quoteCode: code,
+        name: form.name,
+        phone: form.phone,
+        personName: form.personName || "",
+        eventType: selectedEvent?.label || form.eventType,
+        date: form.date,
+        location: form.location,
+        venueType: selectedVenue?.label || form.venueType,
+        venueNote: form.venueNote || "",
+        budget: budgetDisplay,
+        servicesCount: totalSelected,
+        nonVegCount: form.nonVegCount || "",
+        vegCount: form.vegCount || "",
+        notes: form.notes || "",
+        services: form.selected,
+        status: "New",
+        submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      };
+      const existing = JSON.parse(localStorage.getItem("maxx_bookers") || "[]");
+      existing.push(bookerData);
+      localStorage.setItem("maxx_bookers", JSON.stringify(existing));
+    } catch (e) {
+      console.error("Failed to save booker to localStorage:", e);
+    }
+
     setForm(f => ({ ...f, quoteCode: code }));
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
     setSubmitted(true);
@@ -456,25 +508,6 @@ function App() {
 
   return (
     <div style={{ minHeight:"100vh", background:"#f0f3fa", fontFamily:"'Inter',Arial,sans-serif" }}>
-
-      {/* HEADER */}
-      <div style={{ background:NAVY, padding:"14px 20px", display:"flex", alignItems:"center", gap:13 }}>
-        <a href="/" style={{ textDecoration:"none", display:"flex", alignItems:"center", gap:13 }}>
-          <div style={{ width:46, height:46, borderRadius:"50%", border:`2px solid ${GOLD}`, background:NAVY, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-            <div style={{ fontFamily:"Georgia,serif", fontSize:14, fontWeight:900, lineHeight:1 }}>
-              <span style={{ color:"#F8F4EE" }}>MA</span><span style={{ color:GOLD }}>XX</span>
-            </div>
-            <div style={{ width:20, height:1, background:GOLD, margin:"2px auto" }} />
-            <div style={{ fontSize:4, letterSpacing:"0.08em", color:GOLD, textTransform:"uppercase" }}>Events</div>
-          </div>
-          <div>
-            <div style={{ fontFamily:"Georgia,serif", fontSize:19, fontWeight:900, color:"#F8F4EE", letterSpacing:2 }}>
-              MA<span style={{ color:GOLD }}>XX</span> EVENTS
-            </div>
-            <div style={{ fontSize:8.5, color:"#7788bb", letterSpacing:"0.16em", textTransform:"uppercase" }}>Build Your Custom Package</div>
-          </div>
-        </a>
-      </div>
 
       {/* PROGRESS */}
       <div style={{ background:NAVY2, padding:"10px 16px 0" }}>
@@ -719,5 +752,12 @@ function App() {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 </script>
+
+<script>
+function toggleMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+</script>
+
 </body>
 </html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bookers Details — MAXX Events & Planners</title>
+<meta name="description" content="View all quote requests and booker details for MAXX Events">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0A0A0A;
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --gold-dark: #9A7A2E;
+  --white: #F8F4EE;
+  --charcoal: #1A1A1A;
+  --mid: #2A2A2A;
+  --muted: #666;
+  --green: #25D366;
+  --gold-rgb: 201,168,76;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;overflow-x:hidden;min-height:100vh}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--black)}
+::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px}
+
+/* ── SIMPLE LOGO HEADER ── */
+.logo-header{background:var(--charcoal);border-bottom:1px solid rgba(201,168,76,.2);padding:12px 20px;display:flex;align-items:center;justify-content:center}
+.logo-header a{text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.06em;color:var(--white)}
+.logo-text span{color:var(--gold)}
+.logo-sub{font-size:9px;color:rgba(201,168,76,.7);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+
+/* ── PAGE HEADER ── */
+.page-header{padding:100px 5vw 40px;text-align:center;position:relative}
+.page-header-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(201,168,76,.07) 0%,transparent 65%);pointer-events:none}
+.page-eyebrow{font-size:11px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;font-weight:500;margin-bottom:12px;position:relative;z-index:1}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);letter-spacing:.04em;position:relative;z-index:1;margin-bottom:8px}
+.page-title span{color:var(--gold)}
+.page-sub{font-size:14px;color:var(--muted);position:relative;z-index:1;max-width:500px;margin:0 auto}
+
+/* ── STATS BAR ── */
+.stats-bar{max-width:1200px;margin:0 auto 32px;padding:0 5vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.stat-box{background:var(--charcoal);border:1px solid var(--mid);border-radius:10px;padding:18px 16px;text-align:center}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--gold);letter-spacing:.04em;line-height:1}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:500}
+
+/* ── CONTROLS ── */
+.controls-bar{max-width:1200px;margin:0 auto 20px;padding:0 5vw;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.search-box{flex:1;min-width:240px;position:relative}
+.search-box input{width:100%;background:var(--charcoal);border:1px solid var(--mid);border-radius:8px;padding:12px 16px 12px 40px;font-size:13px;color:var(--white);font-family:'Outfit',sans-serif;outline:none;transition:border-color .2s}
+.search-box input:focus{border-color:rgba(201,168,76,.4)}
+.search-box input::placeholder{color:var(--muted)}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none}
+.filter-group{display:flex;gap:8px;flex-wrap:wrap}
+.filter-btn{background:var(--charcoal);border:1px solid var(--mid);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;white-space:nowrap}
+.filter-btn:hover{border-color:rgba(201,168,76,.4);color:var(--white)}
+.filter-btn.active{background:rgba(201,168,76,.12);border-color:var(--gold);color:var(--gold)}
+.btn-export{background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:12px;font-weight:500;padding:10px 16px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;white-space:nowrap}
+.btn-export:hover{background:rgba(201,168,76,.08);border-color:var(--gold)}
+.btn-clear{background:transparent;border:1px solid rgba(255,80,80,.3);color:#ff6060;font-size:12px;font-weight:500;padding:10px 16px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;white-space:nowrap}
+.btn-clear:hover{background:rgba(255,80,80,.08);border-color:#ff6060}
+
+/* ── BOOKERS TABLE ── */
+.table-container{max-width:1200px;margin:0 auto;padding:0 5vw 40px}
+.bookers-table{width:100%;border-collapse:separate;border-spacing:0}
+.bookers-table thead{position:sticky;top:64px;z-index:10}
+.bookers-table th{background:var(--charcoal);border-bottom:2px solid var(--gold);padding:14px 16px;font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;text-align:left;white-space:nowrap}
+.bookers-table th:first-child{border-radius:10px 0 0 0}
+.bookers-table th:last-child{border-radius:0 10px 0 0}
+.bookers-table td{background:rgba(26,26,26,.5);border-bottom:1px solid var(--mid);padding:14px 16px;font-size:13px;color:rgba(248,244,238,.85);vertical-align:middle}
+.bookers-table tr:hover td{background:rgba(201,168,76,.04)}
+.bookers-table tr:last-child td:first-child{border-radius:0 0 0 10px}
+.bookers-table tr:last-child td:last-child{border-radius:0 0 10px 0}
+
+/* ── BOOKER CARDS (MOBILE) ── */
+.booker-cards{display:none;flex-direction:column;gap:12px}
+.booker-card{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;overflow:hidden}
+.booker-card-header{padding:16px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--mid)}
+.booker-card-name{font-size:15px;font-weight:600;color:var(--white)}
+.booker-card-code{font-size:11px;color:var(--gold);font-family:monospace;letter-spacing:.04em;margin-top:2px}
+.booker-card-event{font-size:12px;color:var(--muted);margin-top:4px}
+.booker-card-badge{font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.badge-new{background:rgba(201,168,76,.15);color:var(--gold)}
+.badge-contacted{background:rgba(37,211,102,.12);color:#2ecc71}
+.badge-quoted{background:rgba(52,152,219,.12);color:#3498db}
+.badge-confirmed{background:rgba(155,89,182,.12);color:#9b59b6}
+.booker-card-body{padding:16px;display:flex;flex-direction:column;gap:8px}
+.booker-card-row{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.booker-card-label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.booker-card-val{color:var(--white);font-weight:500}
+.booker-card-actions{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--mid)}
+.btn-call{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--green);color:#fff;font-size:12px;font-weight:600;padding:10px;border-radius:6px;text-decoration:none;transition:all .2s}
+.btn-call:hover{background:#1eb854;transform:translateY(-1px)}
+.btn-whatsapp{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:var(--green);font-size:12px;font-weight:600;padding:10px;border-radius:6px;text-decoration:none;transition:all .2s}
+.btn-whatsapp:hover{background:rgba(37,211,102,.18);transform:translateY(-1px)}
+.btn-view{flex:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:12px;font-weight:500;padding:10px 14px;border-radius:6px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;text-decoration:none;white-space:nowrap}
+.btn-view:hover{background:rgba(201,168,76,.08)}
+
+/* ── PHONE CELL ── */
+.phone-link{color:var(--green);text-decoration:none;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;transition:color .2s}
+.phone-link:hover{color:#1eb854;text-decoration:underline}
+.phone-link-secondary{color:var(--muted);text-decoration:none;font-size:12px}
+.phone-link-secondary:hover{color:var(--gold)}
+
+/* ── STATUS PILL ── */
+.status-pill{font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;display:inline-block}
+.status-new{background:rgba(201,168,76,.12);color:var(--gold)}
+.status-contacted{background:rgba(37,211,102,.1);color:#2ecc71}
+.status-quoted{background:rgba(52,152,219,.1);color:#3498db}
+.status-confirmed{background:rgba(155,89,182,.1);color:#9b59b6}
+.status-cancelled{background:rgba(255,80,80,.1);color:#ff6060}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--charcoal);border:1px solid var(--mid);border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--mid);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--charcoal);z-index:1;border-radius:16px 16px 0 0}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.04em}
+.modal-title span{color:var(--gold)}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:24px;cursor:pointer;padding:4px 8px;transition:color .2s;font-family:'Outfit',sans-serif}
+.modal-close:hover{color:var(--white)}
+.modal-body{padding:24px}
+.modal-section{margin-bottom:20px}
+.modal-section-title{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--mid)}
+.modal-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.modal-row-label{color:var(--muted)}
+.modal-row-val{color:var(--white);font-weight:500;text-align:right}
+.modal-services{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.modal-service-tag{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);color:var(--gold);font-size:10px;padding:4px 10px;border-radius:20px}
+.modal-footer{padding:20px 24px;border-top:1px solid var(--mid);display:flex;gap:10px}
+.modal-footer .btn-call{flex:1}
+.modal-footer .btn-whatsapp{flex:1}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:60px 20px}
+.empty-icon{font-size:64px;margin-bottom:16px}
+.empty-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--white);letter-spacing:.04em;margin-bottom:8px}
+.empty-desc{font-size:14px;color:var(--muted);max-width:400px;margin:0 auto 24px;line-height:1.7}
+.btn-primary{background:var(--gold);color:var(--black);font-size:13px;font-weight:600;padding:12px 24px;border-radius:6px;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:background .2s;display:inline-block;border:none;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-primary:hover{background:var(--gold-light)}
+
+/* ── LOADING ── */
+.loading{text-align:center;padding:60px 20px}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--mid);border-top:3px solid var(--gold);border-radius:50%;margin:0 auto 16px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .bookers-table{display:none}
+  .booker-cards{display:flex}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .controls-bar{flex-direction:column;align-items:stretch}
+  .filter-group{justify-content:flex-start}
+  .page-header{padding:90px 5vw 32px}
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.page-header>*{animation:fadeUp .5s ease both}
+.page-eyebrow{animation-delay:.1s}
+.page-title{animation-delay:.2s}
+.page-sub{animation-delay:.3s}
+</style>
+</head>
+<body>
+
+<!-- SIMPLE LOGO HEADER -->
+<div class="logo-header">
+  <a href="index.html">
+    <div>
+      <div class="logo-text">MA<span>XX</span> EVENTS</div>
+      <div class="logo-sub">Bookers Details</div>
+    </div>
+  </a>
+</div>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="page-header-bg"></div>
+  <div class="page-eyebrow">Lead Management</div>
+  <h1 class="page-title">BOOKERS <span>DETAILS</span></h1>
+  <p class="page-sub">View all quote requests, contact bookers directly with one click, and manage your leads.</p>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-box">
+    <div class="stat-num" id="statTotal">0</div>
+    <div class="stat-label">Total Bookers</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num" id="statToday" style="color:#2ecc71">0</div>
+    <div class="stat-label">Today</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num" id="statNew" style="color:var(--gold)">0</div>
+    <div class="stat-label">New Leads</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num" id="statConfirmed" style="color:#9b59b6">0</div>
+    <div class="stat-label">Confirmed</div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls-bar">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search by name, phone, city, or event type..." oninput="renderBookers()">
+  </div>
+  <div class="filter-group">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn" data-filter="New" onclick="setFilter('New', this)">New</button>
+    <button class="filter-btn" data-filter="Contacted" onclick="setFilter('Contacted', this)">Contacted</button>
+    <button class="filter-btn" data-filter="Quoted" onclick="setFilter('Quoted', this)">Quoted</button>
+    <button class="filter-btn" data-filter="Confirmed" onclick="setFilter('Confirmed', this)">Confirmed</button>
+    <button class="filter-btn" data-filter="Cancelled" onclick="setFilter('Cancelled', this)">Cancelled</button>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
+    <button class="btn-clear" onclick="clearAll()">🗑 Clear All</button>
+  </div>
+</div>
+
+<!-- LOADING STATE -->
+<div class="loading" id="loadingState" style="display:none">
+  <div class="loading-spinner"></div>
+  <div style="color:var(--muted);font-size:14px">Loading bookers...</div>
+</div>
+
+<!-- EMPTY STATE -->
+<div class="empty-state" id="emptyState">
+  <div class="empty-icon">📋</div>
+  <div class="empty-title">NO BOOKERS YET</div>
+  <div class="empty-desc">When someone fills out the Get Quote form on the booking page, their details will appear here. You can then click to call them directly.</div>
+  <a href="booking_form/index.html" class="btn-primary">Go to Booking Form →</a>
+</div>
+
+<!-- TABLE VIEW (Desktop) -->
+<div class="table-container" id="tableView" style="display:none">
+  <table class="bookers-table">
+    <thead>
+      <tr>
+        <th># Code</th>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Event</th>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Budget</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<!-- CARD VIEW (Mobile) -->
+<div class="booker-cards" id="cardView"></div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Booker <span>Details</span></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTS ──
+const STORAGE_KEY = "maxx_bookers";
+const MAXX_NUMBERS = ["+918778667396", "+916369687944"];
+
+// ── STATE ──
+let currentFilter = "all";
+
+// ── DATA ACCESS ──
+function getBookers() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error("Failed to read bookers from localStorage:", e);
+    return [];
+  }
+}
+
+function saveBookers(bookers) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookers));
+  } catch (e) {
+    console.error("Failed to save bookers to localStorage:", e);
+  }
+}
+
+function updateBookerStatus(code, newStatus) {
+  const bookers = getBookers();
+  const idx = bookers.findIndex(b => b.quoteCode === code);
+  if (idx !== -1) {
+    bookers[idx].status = newStatus;
+    saveBookers(bookers);
+    renderBookers();
+  }
+}
+
+// ── FILTERING ──
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderBookers();
+}
+
+function getFilteredBookers() {
+  let bookers = getBookers();
+  const search = document.getElementById('searchInput')?.value?.toLowerCase() || "";
+
+  // Apply status filter
+  if (currentFilter !== "all") {
+    bookers = bookers.filter(b => b.status === currentFilter);
+  }
+
+  // Apply search
+  if (search) {
+    bookers = bookers.filter(b => {
+      const searchable = [
+        b.name, b.phone, b.personName, b.location,
+        b.eventType, b.budget, b.quoteCode, b.venueType,
+        b.venueNote, b.notes
+      ].filter(Boolean).join(" ").toLowerCase();
+      return searchable.includes(search);
+    });
+  }
+
+  // Sort: newest first
+  bookers.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+  return bookers;
+}
+
+// ── RENDER ──
+function renderBookers() {
+  const bookers = getFilteredBookers();
+  const allBookers = getBookers();
+
+  // Update stats
+  const today = new Date().toDateString();
+  const todayCount = allBookers.filter(b => new Date(b.submittedAt).toDateString() === today).length;
+  const newCount = allBookers.filter(b => b.status === "New").length;
+  const confirmedCount = allBookers.filter(b => b.status === "Confirmed").length;
+
+  document.getElementById('statTotal').textContent = allBookers.length;
+  document.getElementById('statToday').textContent = todayCount;
+  document.getElementById('statNew').textContent = newCount;
+  document.getElementById('statConfirmed').textContent = confirmedCount;
+
+  // Show/hide states
+  const emptyState = document.getElementById('emptyState');
+  const tableView = document.getElementById('tableView');
+  const cardView = document.getElementById('cardView');
+
+  if (allBookers.length === 0) {
+    emptyState.style.display = 'block';
+    tableView.style.display = 'none';
+    cardView.style.display = 'none';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  if (bookers.length === 0 && allBookers.length > 0) {
+    // Filter returned nothing
+    emptyState.innerHTML = `
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">NO MATCHING BOOKERS</div>
+      <div class="empty-desc">No bookers match your current filter or search. Try adjusting your search or clearing filters.</div>
+      <button class="btn-primary" onclick="setFilter('all', document.querySelector('[data-filter=all]')); document.getElementById('searchInput').value=''; renderBookers();">Show All Bookers</button>
+    `;
+    emptyState.style.display = 'block';
+    tableView.style.display = 'none';
+    cardView.style.display = 'none';
+    return;
+  }
+
+  tableView.style.display = 'block';
+  cardView.style.display = isMobile() ? 'flex' : 'none';
+
+  // Render table
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = bookers.map((b, i) => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px;color:var(--gold);letter-spacing:.03em">${escapeHtml(b.quoteCode || '—')}</td>
+      <td>
+        <div style="font-weight:500">${escapeHtml(b.name || '—')}</div>
+        ${b.personName ? `<div style="font-size:11px;color:var(--muted)">${escapeHtml(b.personName)}</div>` : ''}
+      </td>
+      <td>
+        <a href="tel:${escapeHtml(b.phone || '')}" class="phone-link">📞 ${escapeHtml(formatPhone(b.phone))}</a>
+      </td>
+      <td>
+        <span style="font-size:12px">${escapeHtml(truncate(b.eventType, 22))}</span>
+      </td>
+      <td style="font-size:12px">${escapeHtml(formatDate(b.date))}</td>
+      <td style="font-size:12px">${escapeHtml(b.location || '—')}</td>
+      <td style="font-weight:600;color:var(--gold);font-size:12px">${escapeHtml(b.budget || '—')}</td>
+      <td>
+        <span class="status-pill status-${(b.status || 'New').toLowerCase()}">${escapeHtml(b.status || 'New')}</span>
+      </td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <a href="tel:${escapeHtml(b.phone || '')}" class="btn-call" style="padding:6px 12px;font-size:11px;border-radius:4px;white-space:nowrap" title="Call ${escapeHtml(b.name)}">📞 Call</a>
+          <a href="https://wa.me/${escapeHtml(stripPhone(b.phone))}" target="_blank" class="btn-whatsapp" style="padding:6px 12px;font-size:11px;border-radius:4px;white-space:nowrap">💬 WA</a>
+          <button class="btn-view" style="padding:6px 10px;font-size:11px;border-radius:4px" onclick="openModal('${escapeHtml(b.quoteCode || '')}')">👁 View</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  // Render cards
+  cardView.innerHTML = bookers.map(b => `
+    <div class="booker-card">
+      <div class="booker-card-header">
+        <div>
+          <div class="booker-card-name">${escapeHtml(b.name || 'Unknown')}</div>
+          <div class="booker-card-code">${escapeHtml(b.quoteCode || '—')}</div>
+          <div class="booker-card-event">${escapeHtml(truncate(b.eventType, 30))}</div>
+        </div>
+        <span class="booker-card-badge badge-${(b.status || 'New').toLowerCase()}">${escapeHtml(b.status || 'New')}</span>
+      </div>
+      <div class="booker-card-body">
+        <div class="booker-card-row">
+          <span class="booker-card-label">Phone</span>
+          <a href="tel:${escapeHtml(b.phone || '')}" class="phone-link">📞 ${escapeHtml(formatPhone(b.phone))}</a>
+        </div>
+        ${b.personName ? `
+        <div class="booker-card-row">
+          <span class="booker-card-label">Person</span>
+          <span class="booker-card-val">${escapeHtml(b.personName)}</span>
+        </div>` : ''}
+        <div class="booker-card-row">
+          <span class="booker-card-label">Date</span>
+          <span class="booker-card-val">${escapeHtml(formatDate(b.date))}</span>
+        </div>
+        <div class="booker-card-row">
+          <span class="booker-card-label">Location</span>
+          <span class="booker-card-val">${escapeHtml(b.location || '—')}</span>
+        </div>
+        <div class="booker-card-row">
+          <span class="booker-card-label">Budget</span>
+          <span class="booker-card-val" style="color:var(--gold)">${escapeHtml(b.budget || '—')}</span>
+        </div>
+      </div>
+      <div class="booker-card-actions">
+        <a href="tel:${escapeHtml(b.phone || '')}" class="btn-call">📞 Call Now</a>
+        <a href="https://wa.me/${escapeHtml(stripPhone(b.phone))}" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>
+        <button class="btn-view" onclick="openModal('${escapeHtml(b.quoteCode || '')}')">👁</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── MODAL ──
+function openModal(code) {
+  const bookers = getBookers();
+  const b = bookers.find(x => x.quoteCode === code);
+  if (!b) return;
+
+  const modal = document.getElementById('detailModal');
+  const body = document.getElementById('modalBody');
+  const footer = document.getElementById('modalFooter');
+
+  const servicesList = b.services ? Object.entries(b.services)
+    .filter(([, items]) => items && items.length > 0)
+    .flatMap(([cat, items]) => items.map(i => `<span class="modal-service-tag">${escapeHtml(i)}</span>`))
+    .join('') : '<span style="color:var(--muted);font-size:12px">No services selected</span>';
+
+  body.innerHTML = `
+    <div class="modal-section">
+      <div class="modal-section-title">📋 Client Information</div>
+      <div class="modal-row"><span class="modal-row-label">Quote Code</span><span class="modal-row-val" style="font-family:monospace;color:var(--gold)">${escapeHtml(b.quoteCode || '—')}</span></div>
+      <div class="modal-row"><span class="modal-row-label">Name</span><span class="modal-row-val">${escapeHtml(b.name || '—')}</span></div>
+      <div class="modal-row"><span class="modal-row-label">WhatsApp</span><span class="modal-row-val">${escapeHtml(formatPhone(b.phone))}</span></div>
+      ${b.personName ? `<div class="modal-row"><span class="modal-row-label">Person Name</span><span class="modal-row-val">${escapeHtml(b.personName)}</span></div>` : ''}
+      <div class="modal-row"><span class="modal-row-label">Status</span><span class="modal-row-val"><span class="status-pill status-${(b.status || 'New').toLowerCase()}">${escapeHtml(b.status || 'New')}</span></span></div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">📅 Event Information</div>
+      <div class="modal-row"><span class="modal-row-label">Event Type</span><span class="modal-row-val">${escapeHtml(b.eventType || '—')}</span></div>
+      <div class="modal-row"><span class="modal-row-label">Event Date</span><span class="modal-row-val">${escapeHtml(formatDate(b.date))}</span></div>
+      <div class="modal-row"><span class="modal-row-label">Location</span><span class="modal-row-val">${escapeHtml(b.location || '—')}</span></div>
+      <div class="modal-row"><span class="modal-row-label">Venue Type</span><span class="modal-row-val">${escapeHtml(b.venueType || '—')}</span></div>
+      ${b.venueNote ? `<div class="modal-row"><span class="modal-row-label">Venue Name</span><span class="modal-row-val">${escapeHtml(b.venueNote)}</span></div>` : ''}
+      <div class="modal-row"><span class="modal-row-label">Budget</span><span class="modal-row-val" style="color:var(--gold);font-weight:700">${escapeHtml(b.budget || '—')}</span></div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">🍽️ Food & Services</div>
+      <div class="modal-row"><span class="modal-row-label">Non-Veg Guests</span><span class="modal-row-val">${escapeHtml(b.nonVegCount || '—')}</span></div>
+      <div class="modal-row"><span class="modal-row-label">Veg Guests</span><span class="modal-row-val">${escapeHtml(b.vegCount || '—')}</span></div>
+      ${b.servicesCount ? `<div class="modal-row"><span class="modal-row-label">Services Selected</span><span class="modal-row-val">${b.servicesCount} items</span></div>` : ''}
+      ${b.notes ? `<div class="modal-row"><span class="modal-row-label">Notes</span><span class="modal-row-val">${escapeHtml(b.notes)}</span></div>` : ''}
+    </div>
+    ${servicesList !== '<span style="color:var(--muted);font-size:12px">No services selected</span>' ? `
+    <div class="modal-section">
+      <div class="modal-section-title">✅ Selected Services</div>
+      <div class="modal-services">${servicesList}</div>
+    </div>` : ''}
+    <div class="modal-section">
+      <div class="modal-section-title">⏱️ Submission</div>
+      <div class="modal-row"><span class="modal-row-label">Submitted At</span><span class="modal-row-val">${escapeHtml(b.submittedAt || '—')}</span></div>
+    </div>
+
+    <div class="modal-section" style="background:var(--black);border:1px solid var(--mid);border-radius:10px;padding:16px;margin-top:8px">
+      <div class="modal-section-title" style="margin-bottom:12px">Update Status</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="filter-btn ${b.status === 'New' ? 'active' : ''}" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'New'); openModal('${escapeHtml(b.quoteCode)}');">New</button>
+        <button class="filter-btn ${b.status === 'Contacted' ? 'active' : ''}" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'Contacted'); openModal('${escapeHtml(b.quoteCode)}');">Contacted</button>
+        <button class="filter-btn ${b.status === 'Quoted' ? 'active' : ''}" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'Quoted'); openModal('${escapeHtml(b.quoteCode)}');">Quoted</button>
+        <button class="filter-btn ${b.status === 'Confirmed' ? 'active' : ''}" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'Confirmed'); openModal('${escapeHtml(b.quoteCode)}');">Confirmed</button>
+        <button class="filter-btn ${b.status === 'Cancelled' ? 'active' : ''}" style="color:#ff6060;border-color:rgba(255,80,80,.3)" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'Cancelled'); openModal('${escapeHtml(b.quoteCode)}');">Cancelled</button>
+      </div>
+    </div>
+  `;
+
+  footer.innerHTML = `
+    <a href="tel:${escapeHtml(b.phone || '')}" class="btn-call">📞 Call ${escapeHtml(b.name || 'Booker')}</a>
+    <a href="https://wa.me/${escapeHtml(stripPhone(b.phone))}" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>
+  `;
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── EXPORT CSV ──
+function exportCSV() {
+  const bookers = getFilteredBookers();
+  if (bookers.length === 0) {
+    alert('No bookers to export.');
+    return;
+  }
+
+  const headers = ['Quote Code', 'Name', 'Phone', 'Person Name', 'Event Type', 'Event Date', 'Location', 'Venue Type', 'Venue Name', 'Budget', 'Services Count', 'Non-Veg Count', 'Veg Count', 'Notes', 'Status', 'Submitted At'];
+  const rows = bookers.map(b => [
+    b.quoteCode || '',
+    b.name || '',
+    b.phone || '',
+    b.personName || '',
+    b.eventType || '',
+    b.date || '',
+    b.location || '',
+    b.venueType || '',
+    b.venueNote || '',
+    b.budget || '',
+    b.servicesCount || 0,
+    b.nonVegCount || '',
+    b.vegCount || '',
+    b.notes || '',
+    b.status || 'New',
+    b.submittedAt || ''
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `maxx-bookers-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── CLEAR ALL ──
+function clearAll() {
+  if (confirm('Are you sure you want to delete ALL booker records? This cannot be undone.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderBookers();
+  }
+}
+
+// ── HELPERS ──
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function formatPhone(phone) {
+  if (!phone) return '—';
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  if (cleaned.startsWith('+91') && cleaned.length === 13) {
+    return `+91 ${cleaned.slice(3, 8)} ${cleaned.slice(8)}`;
+  }
+  return phone;
+}
+
+function stripPhone(phone) {
+  if (!phone) return '';
+  return phone.replace(/[\s\-\(\)\+]/g, '');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
+
+function truncate(str, len) {
+  if (!str) return '';
+  return str.length > len ? str.slice(0, len) + '…' : str;
+}
+
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+// ── CLOSE MODAL ON BACKGROUND CLICK ──
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── KEYBOARD SHORTCUT ──
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── INIT ──
+renderBookers();
+
+// ── LISTEN FOR STORAGE CHANGES FROM OTHER TABS ──
+window.addEventListener('storage', function(e) {
+  if (e.key === STORAGE_KEY) {
+    renderBookers();
+  }
+});
+
+// ── REFRESH EVERY 30 SECONDS ──
+setInterval(renderBookers, 30000);
+</script>
+</body>
+</html>
