@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual Entry — MAXX Events & Planners</title>
+<meta name="description" content="Add old enquiries manually to MAXX Events">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0A0A0A;
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --white: #F8F4EE;
+  --charcoal: #1A1A1A;
+  --mid: #2A2A2A;
+  --muted: #666;
+  --green: #25D366;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh}
+
+.logo-header{background:var(--charcoal);border-bottom:1px solid rgba(201,168,76,.2);padding:12px 20px;display:flex;align-items:center;justify-content:center}
+.logo-header a{text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.06em;color:var(--white)}
+.logo-text span{color:var(--gold)}
+.logo-sub{font-size:9px;color:rgba(201,168,76,.7);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+
+.page-header{padding:60px 5vw 24px;text-align:center}
+.page-eyebrow{font-size:11px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;font-weight:500;margin-bottom:12px}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,52px);letter-spacing:.04em;margin-bottom:8px}
+.page-title span{color:var(--gold)}
+.page-sub{font-size:13px;color:var(--muted);max-width:520px;margin:0 auto}
+
+.wrap{max-width:720px;margin:0 auto;padding:0 5vw 60px}
+
+.panel{background:var(--charcoal);border:1px solid var(--mid);border-radius:14px;padding:24px;margin-bottom:20px}
+.panel-title{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+textarea#pasteBox{width:100%;min-height:140px;background:var(--black);border:1px solid var(--mid);border-radius:10px;padding:14px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;line-height:1.6;resize:vertical;outline:none}
+textarea#pasteBox:focus{border-color:rgba(201,168,76,.4)}
+textarea#pasteBox::placeholder{color:var(--muted)}
+
+.btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn-primary{background:var(--gold);color:var(--black);font-size:13px;font-weight:600;padding:12px 22px;border-radius:8px;letter-spacing:.04em;border:none;cursor:pointer;font-family:'Outfit',sans-serif;transition:background .2s}
+.btn-primary:hover{background:var(--gold-light)}
+.btn-ghost{background:transparent;border:1px solid var(--mid);color:var(--muted);font-size:13px;padding:12px 22px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
+.btn-ghost:hover{border-color:rgba(201,168,76,.4);color:var(--white)}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+.field input,.field select,.field textarea{background:var(--black);border:1px solid var(--mid);border-radius:8px;padding:11px 12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(201,168,76,.4)}
+.field textarea{min-height:80px;resize:vertical}
+.field-required label::after{content:' *';color:var(--gold)}
+
+#reviewPanel{display:none}
+#successPanel{display:none;text-align:center;padding:40px 24px}
+.success-icon{font-size:48px;margin-bottom:12px}
+.success-code{font-family:monospace;color:var(--gold);font-size:16px;letter-spacing:.04em;margin:8px 0 20px}
+
+@media(max-width:640px){
+  .field-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="logo-header">
+  <a href="bookers-details.html">
+    <div>
+      <div class="logo-text">MA<span>XX</span> EVENTS</div>
+      <div class="logo-sub">Manual Entry</div>
+    </div>
+  </a>
+</div>
+
+<section class="page-header">
+  <div class="page-eyebrow">Backfill Old Enquiries</div>
+  <h1 class="page-title">MANUAL <span>ENTRY</span></h1>
+  <p class="page-sub">Paste a past quote/enquiry message, auto-fill the fields, correct anything the parser missed, then save it to both the Google Sheet and Bookers Details.</p>
+</section>
+
+<div class="wrap">
+
+  <div class="panel" id="pasteStep">
+    <div class="panel-title">📋 Step 1 — Paste The Enquiry Text</div>
+    <textarea id="pasteBox" placeholder="Paste the customer's WhatsApp message or your quote note here. e.g.&#10;Name: Balaji, 9600789076&#10;Wedding at Kanchipuram, 26 March 2027&#10;Budget 4-5 lakh, Kalyana Mandapam&#10;Non-veg 300, Veg 200"></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="handleParse()">✨ Parse & Review</button>
+      <button class="btn-ghost" onclick="showReview({})">Skip — Fill Manually</button>
+    </div>
+  </div>
+
+  <div class="panel" id="reviewPanel">
+    <div class="panel-title">✏️ Step 2 — Review & Correct</div>
+    <div class="field-grid">
+      <div class="field field-required"><label>Name</label><input id="f_name"></div>
+      <div class="field field-required"><label>Phone</label><input id="f_phone" placeholder="10-digit mobile"></div>
+      <div class="field"><label>Contact / Person Name</label><input id="f_personName"></div>
+      <div class="field">
+        <label>Event Type</label>
+        <select id="f_eventType">
+          <option value="">— Select —</option>
+          <option value="🌸 Puberty Ceremony">🌸 Puberty Ceremony</option>
+          <option value="💍 Wedding / Reception">💍 Wedding / Reception</option>
+          <option value="💑 Engagement">💑 Engagement</option>
+          <option value="🌿 Haldi & Mehndi">🌿 Haldi & Mehndi</option>
+          <option value="🎂 Birthday">🎂 Birthday</option>
+          <option value="🎊 Other Event">🎊 Other Event</option>
+        </select>
+      </div>
+      <div class="field"><label>Event Date</label><input id="f_date" type="date"></div>
+      <div class="field"><label>Location</label><input id="f_location"></div>
+      <div class="field">
+        <label>Venue Type</label>
+        <select id="f_venueType">
+          <option value="">— Select —</option>
+          <option value="🏛️ Marriage Hall">🏛️ Marriage Hall</option>
+          <option value="🛕 Kalyana Mandapam">🛕 Kalyana Mandapam</option>
+          <option value="🌳 Outdoor / Open Space">🌳 Outdoor / Open Space</option>
+          <option value="🏨 Hotel / Banquet">🏨 Hotel / Banquet</option>
+          <option value="🏠 Own Venue / Home">🏠 Own Venue / Home</option>
+          <option value="❓ Not Decided Yet">❓ Not Decided Yet</option>
+        </select>
+      </div>
+      <div class="field"><label>Venue Name</label><input id="f_venueNote"></div>
+      <div class="field"><label>Budget</label><input id="f_budget" placeholder="e.g. ₹4,00,000 – ₹5,00,000"></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="f_status">
+          <option value="New">New</option>
+          <option value="Contacted">Contacted</option>
+          <option value="Quoted">Quoted</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="field"><label>Non-Veg Count</label><input id="f_nonVegCount"></div>
+      <div class="field"><label>Veg Count</label><input id="f_vegCount"></div>
+      <div class="field full"><label>Notes (raw message kept here)</label><textarea id="f_notes"></textarea></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="handleSave()">💾 Save Booker</button>
+      <button class="btn-ghost" onclick="resetForm()">↺ Start Over</button>
+    </div>
+  </div>
+
+  <div class="panel" id="successPanel">
+    <div class="success-icon">✅</div>
+    <div class="panel-title" style="justify-content:center">Saved</div>
+    <div class="success-code" id="successCode"></div>
+    <div class="btn-row" style="justify-content:center">
+      <a href="bookers-details.html" class="btn-primary" style="text-decoration:none">View Bookers Details →</a>
+      <button class="btn-ghost" onclick="resetForm()">➕ Add Another</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
+
+function generateCode() {
+  const n = new Date();
+  const yy = String(n.getFullYear()).slice(2);
+  const mm = String(n.getMonth() + 1).padStart(2, "0");
+  const dd = String(n.getDate()).padStart(2, "0");
+  const rand = String(Math.floor(Math.random() * 900) + 100);
+  return `MX${yy}${mm}${dd}-${rand}`;
+}
+
+// ── PARSE FREE TEXT ──
+function parseEnquiryText(text) {
+  const result = {};
+
+  // Phone (Indian mobile)
+  let m = text.match(/(?:\+?91[\s\-]?)?([6-9]\d{9})\b/);
+  if (m) result.phone = m[1];
+
+  // Explicit "Name:" field
+  m = text.match(/name\s*[:\-]\s*([^\n,]+)/i);
+  if (m) result.name = m[1].trim();
+
+  m = text.match(/(?:person|contact)\s*name\s*[:\-]\s*([^\n,]+)/i);
+  if (m) result.personName = m[1].trim();
+
+  // If no explicit "Name:" but the name is at the very start followed by comma/phone
+  if (!result.name) {
+    m = text.match(/^\s*([A-Za-z][A-Za-z\s.]{1,30}?)\s*[,\-\n]/);
+    if (m && !/name/i.test(m[1])) result.name = m[1].trim();
+  }
+
+  // Location
+  m = text.match(/location\s*[:\-]\s*([^\n,]+)/i);
+  if (m) result.location = m[1].trim();
+  else {
+    m = text.match(/\b(?:at|in)\s+([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)/);
+    if (m) result.location = m[1].trim();
+  }
+
+  // Budget
+  m = text.match(/budget\s*[:\-]?\s*(₹?[\d,]+(?:\s*(?:-|–|to)\s*₹?[\d,]+)?\s*(?:lakh|lacs?|l)?)/i);
+  if (m) result.budget = m[1].trim();
+  else {
+    m = text.match(/₹\s?[\d,]+(?:\s*[-–]\s*₹?\s?[\d,]+)?/);
+    if (m) result.budget = m[0].trim();
+  }
+
+  // Date — dd/mm/yyyy or dd-mm-yyyy
+  m = text.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
+  if (m) {
+    const d = m[1], mo = m[2];
+    let y = m[3];
+    if (y.length === 2) y = "20" + y;
+    result.date = `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  } else {
+    // "26 March 2027" style
+    const months = { jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12 };
+    const monthRe = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
+    m = text.match(new RegExp(`\\b(\\d{1,2})\\s+(${monthRe})\\s*,?\\s*(\\d{4})\\b`, "i"));
+    if (m) {
+      const mo = months[m[2].slice(0,3).toLowerCase()];
+      result.date = `${m[3]}-${String(mo).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
+    } else {
+      m = text.match(new RegExp(`\\b(${monthRe})\\s+(\\d{1,2}),?\\s*(\\d{4})\\b`, "i"));
+      if (m) {
+        const mo = months[m[1].slice(0,3).toLowerCase()];
+        result.date = `${m[3]}-${String(mo).padStart(2,"0")}-${String(m[2]).padStart(2,"0")}`;
+      }
+    }
+  }
+
+  // Event type keywords
+  const eventKeywords = [
+    { re: /wedding|marriage|reception/i, label: "💍 Wedding / Reception" },
+    { re: /engagement|ring ceremony/i, label: "💑 Engagement" },
+    { re: /haldi|mehndi|mehendi/i, label: "🌿 Haldi & Mehndi" },
+    { re: /birthday/i, label: "🎂 Birthday" },
+    { re: /puberty|manjal/i, label: "🌸 Puberty Ceremony" },
+  ];
+  for (const k of eventKeywords) { if (k.re.test(text)) { result.eventType = k.label; break; } }
+
+  // Venue type keywords
+  const venueKeywords = [
+    { re: /mandapam/i, label: "🛕 Kalyana Mandapam" },
+    { re: /marriage hall|\bhall\b/i, label: "🏛️ Marriage Hall" },
+    { re: /hotel|banquet/i, label: "🏨 Hotel / Banquet" },
+    { re: /outdoor|garden|open ground/i, label: "🌳 Outdoor / Open Space" },
+  ];
+  for (const k of venueKeywords) { if (k.re.test(text)) { result.venueType = k.label; break; } }
+
+  // Food counts — non-veg first, then veg (avoid "non-veg" matching the veg regex)
+  let nonVegSpan = null;
+  m = text.match(/non[\s\-]?veg\D{0,10}(\d[\d,\-–\s]*\d|\d+)/i);
+  if (m) { result.nonVegCount = m[1].trim(); nonVegSpan = m.index; }
+
+  const vegText = nonVegSpan !== null ? text.slice(0, nonVegSpan) + text.slice(nonVegSpan + m[0].length) : text;
+  m = vegText.match(/\bveg\D{0,10}(\d[\d,\-–\s]*\d|\d+)/i);
+  if (m) result.vegCount = m[1].trim();
+
+  result.notes = text.trim();
+  return result;
+}
+
+function handleParse() {
+  const text = document.getElementById('pasteBox').value.trim();
+  if (!text) { alert('Paste some enquiry text first, or use "Skip — Fill Manually".'); return; }
+  showReview(parseEnquiryText(text));
+}
+
+function showReview(data) {
+  document.getElementById('f_name').value = data.name || '';
+  document.getElementById('f_phone').value = data.phone || '';
+  document.getElementById('f_personName').value = data.personName || '';
+  document.getElementById('f_eventType').value = data.eventType || '';
+  document.getElementById('f_date').value = data.date || '';
+  document.getElementById('f_location').value = data.location || '';
+  document.getElementById('f_venueType').value = data.venueType || '';
+  document.getElementById('f_venueNote').value = data.venueNote || '';
+  document.getElementById('f_budget').value = data.budget || '';
+  document.getElementById('f_status').value = data.status || 'New';
+  document.getElementById('f_nonVegCount').value = data.nonVegCount || '';
+  document.getElementById('f_vegCount').value = data.vegCount || '';
+  document.getElementById('f_notes').value = data.notes || '';
+
+  document.getElementById('pasteStep').style.display = 'none';
+  document.getElementById('reviewPanel').style.display = 'block';
+  document.getElementById('successPanel').style.display = 'none';
+}
+
+function resetForm() {
+  document.getElementById('pasteBox').value = '';
+  document.getElementById('pasteStep').style.display = 'block';
+  document.getElementById('reviewPanel').style.display = 'none';
+  document.getElementById('successPanel').style.display = 'none';
+}
+
+async function handleSave() {
+  const name = document.getElementById('f_name').value.trim();
+  const phone = document.getElementById('f_phone').value.trim();
+  if (!name || !phone) { alert('Name and Phone are required.'); return; }
+
+  const code = generateCode();
+  const bookerData = {
+    quoteCode: code,
+    name,
+    phone,
+    personName: document.getElementById('f_personName').value.trim(),
+    eventType: document.getElementById('f_eventType').value,
+    date: document.getElementById('f_date').value,
+    location: document.getElementById('f_location').value.trim(),
+    venueType: document.getElementById('f_venueType').value,
+    venueNote: document.getElementById('f_venueNote').value.trim(),
+    budget: document.getElementById('f_budget').value.trim(),
+    servicesCount: 0,
+    nonVegCount: document.getElementById('f_nonVegCount').value.trim(),
+    vegCount: document.getElementById('f_vegCount').value.trim(),
+    notes: document.getElementById('f_notes').value.trim(),
+    status: document.getElementById('f_status').value || 'New',
+    source: 'manual',
+    submittedAt: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+  };
+
+  // Save to localStorage cache (so it shows immediately on this device)
+  try {
+    const existing = JSON.parse(localStorage.getItem('maxx_bookers') || '[]');
+    existing.push(bookerData);
+    localStorage.setItem('maxx_bookers', JSON.stringify(existing));
+  } catch (e) {
+    console.error('Failed to cache booker locally:', e);
+  }
+
+  // Save to the Google Sheet (source of truth)
+  if (SHEETS_URL) {
+    try {
+      await fetch(SHEETS_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          quoteCode: code,
+          name: bookerData.name,
+          phone: bookerData.phone,
+          personName: bookerData.personName,
+          eventType: bookerData.eventType,
+          date: bookerData.date,
+          location: bookerData.location,
+          venueType: bookerData.venueType,
+          venueName: bookerData.venueNote,
+          budget: bookerData.budget,
+          servicesCount: 0,
+          nonVegCount: bookerData.nonVegCount,
+          vegCount: bookerData.vegCount,
+          notes: bookerData.notes,
+          status: bookerData.status,
+          source: 'manual',
+        })
+      });
+    } catch (e) {
+      console.error('Failed to save booker to sheet:', e);
+    }
+  }
+
+  document.getElementById('reviewPanel').style.display = 'none';
+  document.getElementById('successCode').textContent = code;
+  document.getElementById('successPanel').style.display = 'block';
+}
+</script>
+</body>
+</html>

@@ -223,10 +223,13 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
     <button class="filter-btn" data-filter="Cancelled" onclick="setFilter('Cancelled', this)">Cancelled</button>
   </div>
   <div style="display:flex;gap:8px">
+    <a href="manual-entry.html" class="btn-export" style="text-decoration:none">➕ Manual Entry</a>
+    <button class="btn-export" onclick="syncFromSheet(true)">🔄 Sync</button>
     <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
     <button class="btn-clear" onclick="clearAll()">🗑 Clear All</button>
   </div>
 </div>
+<div id="syncStatus" style="max-width:1200px;margin:-10px auto 16px;padding:0 5vw;font-size:11px;color:var(--muted)"></div>
 
 <!-- LOADING STATE -->
 <div class="loading" id="loadingState" style="display:none">
@@ -281,6 +284,7 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 // ── CONSTANTS ──
 const STORAGE_KEY = "maxx_bookers";
 const MAXX_NUMBERS = ["+918778667396", "+916369687944"];
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
 
 // ── STATE ──
 let currentFilter = "all";
@@ -311,6 +315,40 @@ function updateBookerStatus(code, newStatus) {
     bookers[idx].status = newStatus;
     saveBookers(bookers);
     renderBookers();
+  }
+
+  if (!SHEETS_URL) return;
+  fetch(SHEETS_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "updateStatus", quoteCode: code, status: newStatus })
+  }).catch(e => console.error("Failed to sync status update:", e));
+}
+
+// ── SYNC FROM GOOGLE SHEET ──
+let isSyncing = false;
+async function syncFromSheet(manual) {
+  if (!SHEETS_URL || isSyncing) return;
+  isSyncing = true;
+  const statusEl = document.getElementById('syncStatus');
+  if (manual && statusEl) statusEl.textContent = 'Syncing…';
+
+  try {
+    const res = await fetch(SHEETS_URL);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Sync failed');
+
+    saveBookers(data.bookers || []);
+    renderBookers();
+    if (statusEl) {
+      statusEl.textContent = 'Last synced from sheet: ' + new Date().toLocaleTimeString('en-IN');
+    }
+  } catch (e) {
+    console.error('Failed to sync from sheet:', e);
+    if (statusEl) {
+      statusEl.textContent = 'Could not reach the sheet — showing last known data.';
+    }
+  } finally {
+    isSyncing = false;
   }
 }
 
@@ -649,6 +687,7 @@ document.addEventListener('keydown', function(e) {
 
 // ── INIT ──
 renderBookers();
+syncFromSheet();
 
 // ── LISTEN FOR STORAGE CHANGES FROM OTHER TABS ──
 window.addEventListener('storage', function(e) {
@@ -657,8 +696,8 @@ window.addEventListener('storage', function(e) {
   }
 });
 
-// ── REFRESH EVERY 30 SECONDS ──
-setInterval(renderBookers, 30000);
+// ── REFRESH FROM SHEET EVERY 30 SECONDS ──
+setInterval(syncFromSheet, 30000);
 </script>
 </body>
 </html>
