@@ -97,6 +97,7 @@ textarea#pasteBox::placeholder{color:var(--muted)}
   <div class="panel" id="reviewPanel">
     <div class="panel-title">✏️ Step 2 — Review & Correct</div>
     <div class="field-grid">
+      <div class="field"><label>Quote Code</label><input id="f_quoteCode"></div>
       <div class="field field-required"><label>Name</label><input id="f_name"></div>
       <div class="field field-required"><label>Phone</label><input id="f_phone" placeholder="10-digit mobile"></div>
       <div class="field"><label>Contact / Person Name</label><input id="f_personName"></div>
@@ -172,68 +173,93 @@ function generateCode() {
   return `MX${yy}${mm}${dd}-${rand}`;
 }
 
-// ── PARSE FREE TEXT ──
-function parseEnquiryText(text) {
+// ── PARSE "Label : Value" LINES ──
+// Tuned to the exact quote message the booking form sends via WhatsApp,
+// e.g. "📅 Event Date   : 2027-03-26" or "🥦 Veg          : 700 – 800".
+function parseLabeledLines(text) {
+  const result = {};
+  const lines = text.split(/\r?\n/);
+
+  for (const line of lines) {
+    // strip leading emoji/symbols, then split on the first colon
+    const cleaned = line.replace(/^[^\w]+/, "");
+    const idx = cleaned.indexOf(":");
+    if (idx === -1) continue;
+
+    const label = cleaned.slice(0, idx).toLowerCase().trim();
+    const value = cleaned.slice(idx + 1).trim();
+    if (!label || !value) continue;
+
+    if (label.includes("quote code")) result.quoteCode = value;
+    else if (label.includes("whatsapp") || label.includes("phone") || label.includes("mobile")) {
+      const digits = value.replace(/\D/g, "").slice(-10);
+      if (digits.length === 10) result.phone = digits;
+    }
+    else if (label.includes("bride") || label.includes("groom") || label.includes("person") || label.includes("contact")) result.personName = value;
+    else if (label.includes("venue type")) result.venueType = value;
+    else if (label.includes("venue")) result.venueNote = value;
+    else if (label.includes("event type")) result.eventType = value;
+    else if (label.includes("date")) result.date = normalizeDate_(value);
+    else if (label.includes("location")) result.location = value;
+    else if (label.includes("budget")) result.budget = value;
+    else if (label.includes("non-veg") || label.includes("non veg")) result.nonVegCount = /not specified/i.test(value) ? "" : value;
+    else if (label.includes("veg")) result.vegCount = /not specified/i.test(value) ? "" : value;
+    else if (label === "name") result.name = value;
+  }
+
+  return result;
+}
+
+function normalizeDate_(value) {
+  // Already ISO (yyyy-mm-dd) — what <input type=date> expects
+  let m = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+
+  // dd/mm/yyyy or dd-mm-yyyy
+  m = value.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
+  if (m) {
+    let y = m[3];
+    if (y.length === 2) y = "20" + y;
+    return `${y}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  }
+
+  // "26 March 2027" or "March 26, 2027"
+  const months = { jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12 };
+  const monthRe = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
+  m = value.match(new RegExp(`\\b(\\d{1,2})\\s+(${monthRe})\\s*,?\\s*(\\d{4})\\b`, "i"));
+  if (m) return `${m[3]}-${String(months[m[2].slice(0,3).toLowerCase()]).padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  m = value.match(new RegExp(`\\b(${monthRe})\\s+(\\d{1,2}),?\\s*(\\d{4})\\b`, "i"));
+  if (m) return `${m[3]}-${String(months[m[1].slice(0,3).toLowerCase()]).padStart(2,"0")}-${m[2].padStart(2,"0")}`;
+
+  return "";
+}
+
+// ── FALLBACK KEYWORD PARSE ──
+// Used to fill in anything the label-line parser above didn't find, for
+// raw unstructured customer messages that don't use "Label : Value" lines.
+function parseKeywords_(text) {
   const result = {};
 
-  // Phone (Indian mobile)
   let m = text.match(/(?:\+?91[\s\-]?)?([6-9]\d{9})\b/);
   if (m) result.phone = m[1];
 
-  // Explicit "Name:" field
   m = text.match(/name\s*[:\-]\s*([^\n,]+)/i);
   if (m) result.name = m[1].trim();
 
-  m = text.match(/(?:person|contact)\s*name\s*[:\-]\s*([^\n,]+)/i);
-  if (m) result.personName = m[1].trim();
-
-  // If no explicit "Name:" but the name is at the very start followed by comma/phone
   if (!result.name) {
     m = text.match(/^\s*([A-Za-z][A-Za-z\s.]{1,30}?)\s*[,\-\n]/);
     if (m && !/name/i.test(m[1])) result.name = m[1].trim();
   }
 
-  // Location
-  m = text.match(/location\s*[:\-]\s*([^\n,]+)/i);
+  m = text.match(/\b(?:at|in)\s+([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)/);
   if (m) result.location = m[1].trim();
-  else {
-    m = text.match(/\b(?:at|in)\s+([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)/);
-    if (m) result.location = m[1].trim();
-  }
 
-  // Budget
-  m = text.match(/budget\s*[:\-]?\s*(₹?[\d,]+(?:\s*(?:-|–|to)\s*₹?[\d,]+)?\s*(?:lakh|lacs?|l)?)/i);
-  if (m) result.budget = m[1].trim();
-  else {
-    m = text.match(/₹\s?[\d,]+(?:\s*[-–]\s*₹?\s?[\d,]+)?/);
-    if (m) result.budget = m[0].trim();
-  }
+  m = text.match(/₹\s?[\d,]+(?:\s*[-–]\s*₹?\s?[\d,]+)?/);
+  if (m) result.budget = m[0].trim();
 
-  // Date — dd/mm/yyyy or dd-mm-yyyy
-  m = text.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
-  if (m) {
-    const d = m[1], mo = m[2];
-    let y = m[3];
-    if (y.length === 2) y = "20" + y;
-    result.date = `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  } else {
-    // "26 March 2027" style
-    const months = { jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12 };
-    const monthRe = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
-    m = text.match(new RegExp(`\\b(\\d{1,2})\\s+(${monthRe})\\s*,?\\s*(\\d{4})\\b`, "i"));
-    if (m) {
-      const mo = months[m[2].slice(0,3).toLowerCase()];
-      result.date = `${m[3]}-${String(mo).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
-    } else {
-      m = text.match(new RegExp(`\\b(${monthRe})\\s+(\\d{1,2}),?\\s*(\\d{4})\\b`, "i"));
-      if (m) {
-        const mo = months[m[1].slice(0,3).toLowerCase()];
-        result.date = `${m[3]}-${String(mo).padStart(2,"0")}-${String(m[2]).padStart(2,"0")}`;
-      }
-    }
-  }
+  const date = normalizeDate_(text);
+  if (date) result.date = date;
 
-  // Event type keywords
   const eventKeywords = [
     { re: /wedding|marriage|reception/i, label: "💍 Wedding / Reception" },
     { re: /engagement|ring ceremony/i, label: "💑 Engagement" },
@@ -243,7 +269,6 @@ function parseEnquiryText(text) {
   ];
   for (const k of eventKeywords) { if (k.re.test(text)) { result.eventType = k.label; break; } }
 
-  // Venue type keywords
   const venueKeywords = [
     { re: /mandapam/i, label: "🛕 Kalyana Mandapam" },
     { re: /marriage hall|\bhall\b/i, label: "🏛️ Marriage Hall" },
@@ -252,15 +277,21 @@ function parseEnquiryText(text) {
   ];
   for (const k of venueKeywords) { if (k.re.test(text)) { result.venueType = k.label; break; } }
 
-  // Food counts — non-veg first, then veg (avoid "non-veg" matching the veg regex)
   let nonVegSpan = null;
-  m = text.match(/non[\s\-]?veg\D{0,10}(\d[\d,\-–\s]*\d|\d+)/i);
+  m = text.match(/non[\s\-]?veg\D{0,20}(\d[\d,\-–\s]*\d|\d+)/i);
   if (m) { result.nonVegCount = m[1].trim(); nonVegSpan = m.index; }
 
   const vegText = nonVegSpan !== null ? text.slice(0, nonVegSpan) + text.slice(nonVegSpan + m[0].length) : text;
-  m = vegText.match(/\bveg\D{0,10}(\d[\d,\-–\s]*\d|\d+)/i);
+  m = vegText.match(/\bveg\D{0,20}(\d[\d,\-–\s]*\d|\d+)/i);
   if (m) result.vegCount = m[1].trim();
 
+  return result;
+}
+
+function parseEnquiryText(text) {
+  const fallback = parseKeywords_(text);
+  const labeled = parseLabeledLines(text);
+  const result = { ...fallback, ...labeled }; // labeled lines win when present
   result.notes = text.trim();
   return result;
 }
@@ -272,6 +303,7 @@ function handleParse() {
 }
 
 function showReview(data) {
+  document.getElementById('f_quoteCode').value = data.quoteCode || generateCode();
   document.getElementById('f_name').value = data.name || '';
   document.getElementById('f_phone').value = data.phone || '';
   document.getElementById('f_personName').value = data.personName || '';
@@ -303,7 +335,7 @@ async function handleSave() {
   const phone = document.getElementById('f_phone').value.trim();
   if (!name || !phone) { alert('Name and Phone are required.'); return; }
 
-  const code = generateCode();
+  const code = document.getElementById('f_quoteCode').value.trim() || generateCode();
   const bookerData = {
     quoteCode: code,
     name,
