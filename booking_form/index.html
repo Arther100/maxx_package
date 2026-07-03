@@ -431,7 +431,9 @@ function App() {
           nonVegCount: form.nonVegCount || "",
           vegCount: form.vegCount || "",
           notes: form.notes || "",
+          status: "New",
           source: "form",
+          services: form.selected,
         })
       }).catch(() => {});
     }
@@ -458,7 +460,9 @@ function App() {
         submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
       };
       const existing = JSON.parse(localStorage.getItem("maxx_bookers") || "[]");
-      existing.push(bookerData);
+      const dupIdx = existing.findIndex(b => b.quoteCode === code);
+      if (dupIdx !== -1) existing[dupIdx] = bookerData;
+      else existing.push(bookerData);
       localStorage.setItem("maxx_bookers", JSON.stringify(existing));
     } catch (e) {
       console.error("Failed to save booker to localStorage:", e);

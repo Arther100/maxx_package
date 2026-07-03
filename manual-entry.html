@@ -37,7 +37,7 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 .panel{background:var(--charcoal);border:1px solid var(--mid);border-radius:14px;padding:24px;margin-bottom:20px}
 .panel-title{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 
-textarea#pasteBox{width:100%;min-height:140px;background:var(--black);border:1px solid var(--mid);border-radius:10px;padding:14px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;line-height:1.6;resize:vertical;outline:none}
+textarea#pasteBox{width:100%;min-height:320px;background:var(--black);border:1px solid var(--mid);border-radius:10px;padding:14px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;line-height:1.6;resize:vertical;outline:none}
 textarea#pasteBox:focus{border-color:rgba(201,168,76,.4)}
 textarea#pasteBox::placeholder{color:var(--muted)}
 
@@ -78,81 +78,27 @@ textarea#pasteBox::placeholder{color:var(--muted)}
 </div>
 
 <section class="page-header">
-  <div class="page-eyebrow">Backfill Old Enquiries</div>
-  <h1 class="page-title">MANUAL <span>ENTRY</span></h1>
-  <p class="page-sub">Paste a past quote/enquiry message, auto-fill the fields, correct anything the parser missed, then save it to both the Google Sheet and Bookers Details.</p>
+  <div class="page-eyebrow">Import Quote</div>
+  <h1 class="page-title">PASTE <span>&amp; SAVE</span></h1>
+  <p class="page-sub">Paste the full WhatsApp quote message from the booking form — every field and all services are parsed and saved automatically.</p>
 </section>
 
 <div class="wrap">
 
   <div class="panel" id="pasteStep">
-    <div class="panel-title">📋 Step 1 — Paste The Enquiry Text</div>
-    <textarea id="pasteBox" placeholder="Paste the customer's WhatsApp message or your quote note here. e.g.&#10;Name: Balaji, 9600789076&#10;Wedding at Kanchipuram, 26 March 2027&#10;Budget 4-5 lakh, Kalyana Mandapam&#10;Non-veg 300, Veg 200"></textarea>
+    <div class="panel-title">📋 Paste WhatsApp Quote Message</div>
+    <textarea id="pasteBox" placeholder="Paste the complete MAXX Events quote message here (the formatted message with Quote Code, Client Details, Services, Food Count, etc.)"></textarea>
     <div class="btn-row">
-      <button class="btn-primary" onclick="handleParse()">✨ Parse & Review</button>
-      <button class="btn-ghost" onclick="showReview({})">Skip — Fill Manually</button>
+      <button class="btn-primary" id="saveBtn" onclick="handlePasteAndSave()">✨ Paste &amp; Save</button>
     </div>
-  </div>
-
-  <div class="panel" id="reviewPanel">
-    <div class="panel-title">✏️ Step 2 — Review & Correct</div>
-    <div class="field-grid">
-      <div class="field"><label>Quote Code</label><input id="f_quoteCode"></div>
-      <div class="field field-required"><label>Name</label><input id="f_name"></div>
-      <div class="field field-required"><label>Phone</label><input id="f_phone" placeholder="10-digit mobile"></div>
-      <div class="field"><label>Contact / Person Name</label><input id="f_personName"></div>
-      <div class="field">
-        <label>Event Type</label>
-        <select id="f_eventType">
-          <option value="">— Select —</option>
-          <option value="🌸 Puberty Ceremony">🌸 Puberty Ceremony</option>
-          <option value="💍 Wedding / Reception">💍 Wedding / Reception</option>
-          <option value="💑 Engagement">💑 Engagement</option>
-          <option value="🌿 Haldi & Mehndi">🌿 Haldi & Mehndi</option>
-          <option value="🎂 Birthday">🎂 Birthday</option>
-          <option value="🎊 Other Event">🎊 Other Event</option>
-        </select>
-      </div>
-      <div class="field"><label>Event Date</label><input id="f_date" type="date"></div>
-      <div class="field"><label>Location</label><input id="f_location"></div>
-      <div class="field">
-        <label>Venue Type</label>
-        <select id="f_venueType">
-          <option value="">— Select —</option>
-          <option value="🏛️ Marriage Hall">🏛️ Marriage Hall</option>
-          <option value="🛕 Kalyana Mandapam">🛕 Kalyana Mandapam</option>
-          <option value="🌳 Outdoor / Open Space">🌳 Outdoor / Open Space</option>
-          <option value="🏨 Hotel / Banquet">🏨 Hotel / Banquet</option>
-          <option value="🏠 Own Venue / Home">🏠 Own Venue / Home</option>
-          <option value="❓ Not Decided Yet">❓ Not Decided Yet</option>
-        </select>
-      </div>
-      <div class="field"><label>Venue Name</label><input id="f_venueNote"></div>
-      <div class="field"><label>Budget</label><input id="f_budget" placeholder="e.g. ₹4,00,000 – ₹5,00,000"></div>
-      <div class="field">
-        <label>Status</label>
-        <select id="f_status">
-          <option value="New">New</option>
-          <option value="Contacted">Contacted</option>
-          <option value="Quoted">Quoted</option>
-          <option value="Confirmed">Confirmed</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
-      </div>
-      <div class="field"><label>Non-Veg Count</label><input id="f_nonVegCount"></div>
-      <div class="field"><label>Veg Count</label><input id="f_vegCount"></div>
-      <div class="field full"><label>Notes (raw message kept here)</label><textarea id="f_notes"></textarea></div>
-    </div>
-    <div class="btn-row">
-      <button class="btn-primary" onclick="handleSave()">💾 Save Booker</button>
-      <button class="btn-ghost" onclick="resetForm()">↺ Start Over</button>
-    </div>
+    <div id="parseError" style="display:none;margin-top:14px;padding:12px 14px;background:rgba(255,80,80,.08);border:1px solid rgba(255,80,80,.3);border-radius:8px;font-size:13px;color:#ff8080"></div>
   </div>
 
   <div class="panel" id="successPanel">
     <div class="success-icon">✅</div>
     <div class="panel-title" style="justify-content:center">Saved</div>
     <div class="success-code" id="successCode"></div>
+    <div id="successSummary" style="text-align:left;font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:20px"></div>
     <div class="btn-row" style="justify-content:center">
       <a href="bookers-details.html" class="btn-primary" style="text-decoration:none">View Bookers Details →</a>
       <button class="btn-ghost" onclick="resetForm()">➕ Add Another</button>
@@ -173,21 +119,60 @@ function generateCode() {
   return `MX${yy}${mm}${dd}-${rand}`;
 }
 
-// ── PARSE "Label : Value" LINES ──
-// Tuned to the exact quote message the booking form sends via WhatsApp,
-// e.g. "📅 Event Date   : 2027-03-26" or "🥦 Veg          : 700 – 800".
+function cleanValue(val) {
+  return val.replace(/^\*+|\*+$/g, "").trim();
+}
+
+// Same structure as booking_form localStorage: { "💐 Garland & Floral": ["item1", ...] }
+function parseServicesBlock(text) {
+  const services = {};
+  let servicesCount = 0;
+
+  const headerMatch = text.match(/SELECTED SERVICES\*?\s*\((\d+)\s*items?\)/i);
+  if (headerMatch) servicesCount = parseInt(headerMatch[1], 10);
+
+  const startIdx = text.search(/SELECTED SERVICES/i);
+  if (startIdx === -1) return { services, servicesCount };
+
+  const endIdx = text.search(/FOOD COUNT/i);
+  const block = endIdx > startIdx ? text.slice(startIdx, endIdx) : text.slice(startIdx);
+  let currentCat = null;
+
+  for (const line of block.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || /SELECTED SERVICES/i.test(trimmed) || /^[┄━─]+/.test(trimmed)) continue;
+
+    const serviceMatch = trimmed.match(/^➤\s*(.+)$/);
+    if (serviceMatch) {
+      if (currentCat) {
+        if (!services[currentCat]) services[currentCat] = [];
+        services[currentCat].push(serviceMatch[1].trim());
+      }
+      continue;
+    }
+
+    if (!trimmed.startsWith("➤") && /[\u{1F300}-\u{1FAFF}]/u.test(trimmed)) {
+      currentCat = trimmed;
+    }
+  }
+
+  const actualCount = Object.values(services).flat().length;
+  if (actualCount > 0) servicesCount = actualCount;
+
+  return { services, servicesCount };
+}
+
+// Parses the exact WhatsApp quote format from the booking form
 function parseLabeledLines(text) {
   const result = {};
-  const lines = text.split(/\r?\n/);
 
-  for (const line of lines) {
-    // strip leading emoji/symbols, then split on the first colon
-    const cleaned = line.replace(/^[^\w]+/, "");
+  for (const line of text.split(/\r?\n/)) {
+    const cleaned = line.replace(/^[^\w*]+/, "").replace(/\*+/g, "");
     const idx = cleaned.indexOf(":");
     if (idx === -1) continue;
 
     const label = cleaned.slice(0, idx).toLowerCase().trim();
-    const value = cleaned.slice(idx + 1).trim();
+    const value = cleanValue(cleaned.slice(idx + 1));
     if (!label || !value) continue;
 
     if (label.includes("quote code")) result.quoteCode = value;
@@ -195,15 +180,15 @@ function parseLabeledLines(text) {
       const digits = value.replace(/\D/g, "").slice(-10);
       if (digits.length === 10) result.phone = digits;
     }
-    else if (label.includes("bride") || label.includes("groom") || label.includes("person") || label.includes("contact")) result.personName = value;
+    else if (label.includes("bride") || label.includes("groom") || (label.includes("person") && !label.includes("name"))) result.personName = value;
     else if (label.includes("venue type")) result.venueType = value;
-    else if (label.includes("venue")) result.venueNote = value;
+    else if (label.includes("venue name")) result.venueNote = value;
     else if (label.includes("event type")) result.eventType = value;
-    else if (label.includes("date")) result.date = normalizeDate_(value);
+    else if (label.includes("event date")) result.date = normalizeDate_(value);
     else if (label.includes("location")) result.location = value;
     else if (label.includes("budget")) result.budget = value;
     else if (label.includes("non-veg") || label.includes("non veg")) result.nonVegCount = /not specified/i.test(value) ? "" : value;
-    else if (label.includes("veg")) result.vegCount = /not specified/i.test(value) ? "" : value;
+    else if (label === "veg" || (label.includes("veg") && !label.includes("non"))) result.vegCount = /not specified/i.test(value) ? "" : value;
     else if (label === "name") result.name = value;
   }
 
@@ -291,87 +276,83 @@ function parseKeywords_(text) {
 function parseEnquiryText(text) {
   const fallback = parseKeywords_(text);
   const labeled = parseLabeledLines(text);
-  const result = { ...fallback, ...labeled }; // labeled lines win when present
-  result.notes = text.trim();
+  const { services, servicesCount } = parseServicesBlock(text);
+  const result = { ...fallback, ...labeled, services, servicesCount };
+  result.notes = "";
+  result.status = "New";
+  result.source = "manual";
+  if (!result.quoteCode) result.quoteCode = generateCode();
   return result;
 }
 
-function handleParse() {
-  const text = document.getElementById('pasteBox').value.trim();
-  if (!text) { alert('Paste some enquiry text first, or use "Skip — Fill Manually".'); return; }
-  showReview(parseEnquiryText(text));
+function showError(msg) {
+  const el = document.getElementById("parseError");
+  el.textContent = msg;
+  el.style.display = "block";
 }
 
-function showReview(data) {
-  document.getElementById('f_quoteCode').value = data.quoteCode || generateCode();
-  document.getElementById('f_name').value = data.name || '';
-  document.getElementById('f_phone').value = data.phone || '';
-  document.getElementById('f_personName').value = data.personName || '';
-  document.getElementById('f_eventType').value = data.eventType || '';
-  document.getElementById('f_date').value = data.date || '';
-  document.getElementById('f_location').value = data.location || '';
-  document.getElementById('f_venueType').value = data.venueType || '';
-  document.getElementById('f_venueNote').value = data.venueNote || '';
-  document.getElementById('f_budget').value = data.budget || '';
-  document.getElementById('f_status').value = data.status || 'New';
-  document.getElementById('f_nonVegCount').value = data.nonVegCount || '';
-  document.getElementById('f_vegCount').value = data.vegCount || '';
-  document.getElementById('f_notes').value = data.notes || '';
-
-  document.getElementById('pasteStep').style.display = 'none';
-  document.getElementById('reviewPanel').style.display = 'block';
-  document.getElementById('successPanel').style.display = 'none';
+function hideError() {
+  document.getElementById("parseError").style.display = "none";
 }
 
-function resetForm() {
-  document.getElementById('pasteBox').value = '';
-  document.getElementById('pasteStep').style.display = 'block';
-  document.getElementById('reviewPanel').style.display = 'none';
-  document.getElementById('successPanel').style.display = 'none';
+function buildSuccessSummary(data) {
+  const lines = [
+    `<strong style="color:var(--white)">${escapeHtml(data.name)}</strong>`,
+    data.phone ? `📱 ${escapeHtml(data.phone)}` : "",
+    data.eventType ? `${escapeHtml(data.eventType)}` : "",
+    data.date ? `📅 ${escapeHtml(data.date)}` : "",
+    data.location ? `📍 ${escapeHtml(data.location)}` : "",
+    data.budget ? `💰 ${escapeHtml(data.budget)}` : "",
+    data.servicesCount ? `✅ ${data.servicesCount} services parsed` : "",
+  ].filter(Boolean);
+  return lines.join("<br>");
 }
 
-async function handleSave() {
-  const name = document.getElementById('f_name').value.trim();
-  const phone = document.getElementById('f_phone').value.trim();
-  if (!name || !phone) { alert('Name and Phone are required.'); return; }
+function escapeHtml(str) {
+  if (!str) return "";
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
 
-  const code = document.getElementById('f_quoteCode').value.trim() || generateCode();
+async function saveBooker(data) {
   const bookerData = {
-    quoteCode: code,
-    name,
-    phone,
-    personName: document.getElementById('f_personName').value.trim(),
-    eventType: document.getElementById('f_eventType').value,
-    date: document.getElementById('f_date').value,
-    location: document.getElementById('f_location').value.trim(),
-    venueType: document.getElementById('f_venueType').value,
-    venueNote: document.getElementById('f_venueNote').value.trim(),
-    budget: document.getElementById('f_budget').value.trim(),
-    servicesCount: 0,
-    nonVegCount: document.getElementById('f_nonVegCount').value.trim(),
-    vegCount: document.getElementById('f_vegCount').value.trim(),
-    notes: document.getElementById('f_notes').value.trim(),
-    status: document.getElementById('f_status').value || 'New',
-    source: 'manual',
-    submittedAt: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    quoteCode: data.quoteCode,
+    name: data.name,
+    phone: data.phone,
+    personName: data.personName || "",
+    eventType: data.eventType || "",
+    date: data.date || "",
+    location: data.location || "",
+    venueType: data.venueType || "",
+    venueNote: data.venueNote || "",
+    budget: data.budget || "",
+    services: data.services || {},
+    servicesCount: data.servicesCount || 0,
+    nonVegCount: data.nonVegCount || "",
+    vegCount: data.vegCount || "",
+    notes: data.notes || "",
+    status: data.status || "New",
+    source: data.source || "manual",
+    submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
   };
 
-  // Save to localStorage cache (so it shows immediately on this device)
   try {
-    const existing = JSON.parse(localStorage.getItem('maxx_bookers') || '[]');
-    existing.push(bookerData);
-    localStorage.setItem('maxx_bookers', JSON.stringify(existing));
+    const existing = JSON.parse(localStorage.getItem("maxx_bookers") || "[]");
+    const dupIdx = existing.findIndex(b => b.quoteCode === bookerData.quoteCode);
+    if (dupIdx !== -1) existing[dupIdx] = bookerData;
+    else existing.push(bookerData);
+    localStorage.setItem("maxx_bookers", JSON.stringify(existing));
   } catch (e) {
-    console.error('Failed to cache booker locally:', e);
+    console.error("Failed to cache booker locally:", e);
   }
 
-  // Save to the Google Sheet (source of truth)
   if (SHEETS_URL) {
     try {
       await fetch(SHEETS_URL, {
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify({
-          quoteCode: code,
+          quoteCode: bookerData.quoteCode,
           name: bookerData.name,
           phone: bookerData.phone,
           personName: bookerData.personName,
@@ -381,22 +362,58 @@ async function handleSave() {
           venueType: bookerData.venueType,
           venueName: bookerData.venueNote,
           budget: bookerData.budget,
-          servicesCount: 0,
+          servicesCount: bookerData.servicesCount,
           nonVegCount: bookerData.nonVegCount,
           vegCount: bookerData.vegCount,
           notes: bookerData.notes,
           status: bookerData.status,
-          source: 'manual',
-        })
+          source: bookerData.source,
+          services: bookerData.services,
+        }),
       });
     } catch (e) {
-      console.error('Failed to save booker to sheet:', e);
+      console.error("Failed to save booker to sheet:", e);
     }
   }
 
-  document.getElementById('reviewPanel').style.display = 'none';
-  document.getElementById('successCode').textContent = code;
-  document.getElementById('successPanel').style.display = 'block';
+  return bookerData;
+}
+
+async function handlePasteAndSave() {
+  hideError();
+  const text = document.getElementById("pasteBox").value.trim();
+  if (!text) {
+    showError("Paste the WhatsApp quote message first.");
+    return;
+  }
+
+  const data = parseEnquiryText(text);
+  if (!data.name || !data.phone) {
+    showError("Could not find Name and WhatsApp number in the message. Check the paste is the full quote format.");
+    return;
+  }
+
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+
+  try {
+    await saveBooker(data);
+    document.getElementById("pasteStep").style.display = "none";
+    document.getElementById("successCode").textContent = data.quoteCode;
+    document.getElementById("successSummary").innerHTML = buildSuccessSummary(data);
+    document.getElementById("successPanel").style.display = "block";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✨ Paste & Save";
+  }
+}
+
+function resetForm() {
+  document.getElementById("pasteBox").value = "";
+  hideError();
+  document.getElementById("pasteStep").style.display = "block";
+  document.getElementById("successPanel").style.display = "none";
 }
 </script>
 </body>

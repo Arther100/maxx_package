@@ -16,13 +16,11 @@
 
 const SHEET_NAME = "Quotes";
 
-// Matches your existing sheet's column order (A–N) with three new columns
-// appended at the end (O–Q) so old rows are untouched.
 const HEADERS = [
   "Timestamp", "Name", "Phone", "Person Name", "Event Type",
   "Event Date", "Location", "Budget", "Venue Type", "Venue Name",
   "Services Count", "Non-Veg Count", "Veg Count", "Notes",
-  "Quote Code", "Status", "Source"
+  "Quote Code", "Status", "Source", "Services"
 ];
 
 function getSheet_() {
@@ -41,9 +39,6 @@ function getSheet_() {
       .setFontWeight("bold");
     sheet.setFrozenRows(1);
   } else {
-    // Migration: add any missing header cells (e.g. Quote Code / Status /
-    // Source on a sheet that predates this script) without touching
-    // existing columns or data.
     const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     if (existingHeaders.length < HEADERS.length) {
       sheet.getRange(1, existingHeaders.length + 1, 1, HEADERS.length - existingHeaders.length)
@@ -60,9 +55,103 @@ function jsonOut_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// GET  →  returns every quote row as JSON, used by bookers-details.html so
-// it works from any device/browser instead of only the one that submitted
-// the form.
+function formatServicesCell_(servicesObj) {
+  if (!servicesObj) return "";
+  if (typeof servicesObj === "string") {
+    if (servicesObj.trim().startsWith("{")) {
+      try { return formatServicesCell_(JSON.parse(servicesObj)); } catch (e) {}
+    }
+    return servicesObj;
+  }
+  const lines = [];
+  Object.keys(servicesObj).forEach(function(cat) {
+    const items = servicesObj[cat];
+    if (items && items.length) lines.push(cat + " | " + items.join("; "));
+  });
+  return lines.join("\n");
+}
+
+function parseServicesCell_(val) {
+  if (!val) return {};
+  const s = String(val);
+  if (s.trim().startsWith("{")) {
+    try { return JSON.parse(s); } catch (e) {}
+  }
+  const services = {};
+  s.split("\n").forEach(function(line) {
+    const idx = line.indexOf("|");
+    if (idx === -1) return;
+    const cat = line.slice(0, idx).trim();
+    const items = line.slice(idx + 1).split(";").map(function(x) { return x.trim(); }).filter(Boolean);
+    if (cat && items.length) services[cat] = items;
+  });
+  return services;
+}
+
+function rowToBooker_(row, sheetRowNum, sheet) {
+  if (!row.some(function(cell) { return cell !== "" && cell !== null; })) return null;
+
+  if (!row[14]) {
+    const code = "MX-LEGACY-" + sheetRowNum;
+    sheet.getRange(sheetRowNum, 15).setValue(code);
+    row[14] = code;
+  }
+
+  return {
+    submittedAt: row[0] ? String(row[0]) : "",
+    name: row[1] ? String(row[1]) : "",
+    phone: row[2] ? String(row[2]) : "",
+    personName: row[3] ? String(row[3]) : "",
+    eventType: row[4] ? String(row[4]) : "",
+    date: row[5] ? String(row[5]) : "",
+    location: row[6] ? String(row[6]) : "",
+    budget: row[7] ? String(row[7]) : "",
+    venueType: row[8] ? String(row[8]) : "",
+    venueNote: row[9] ? String(row[9]) : "",
+    servicesCount: row[10] || 0,
+    nonVegCount: row[11] ? String(row[11]) : "",
+    vegCount: row[12] ? String(row[12]) : "",
+    notes: row[13] ? String(row[13]) : "",
+    quoteCode: row[14] ? String(row[14]) : "",
+    status: row[15] ? String(row[15]) : "New",
+    source: row[16] ? String(row[16]) : "form",
+    services: parseServicesCell_(row[17])
+  };
+}
+
+function findRowByQuoteCode_(sheet, quoteCode) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2 || !quoteCode) return -1;
+  const codes = sheet.getRange(2, 15, lastRow - 1, 1).getValues();
+  for (let i = 0; i < codes.length; i++) {
+    if (String(codes[i][0]) === String(quoteCode)) return i + 2;
+  }
+  return -1;
+}
+
+function dataToRow_(data, isNew) {
+  return [
+    isNew ? new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : data.timestamp || new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+    data.name || "",
+    data.phone || "",
+    data.personName || "",
+    data.eventType || "",
+    data.date || "",
+    data.location || "",
+    data.budget || "",
+    data.venueType || "",
+    data.venueName || "",
+    data.servicesCount || 0,
+    data.nonVegCount || "",
+    data.vegCount || "",
+    data.notes || "",
+    data.quoteCode || "",
+    data.status || "New",
+    data.source || "form",
+    formatServicesCell_(data.services || "")
+  ];
+}
+
 function doGet(e) {
   try {
     const sheet = getSheet_();
@@ -71,38 +160,11 @@ function doGet(e) {
 
     const numRows = lastRow - 1;
     const values = sheet.getRange(2, 1, numRows, HEADERS.length).getValues();
-
     const bookers = [];
-    values.forEach((row, i) => {
-      if (!row.some(cell => cell !== "" && cell !== null)) return; // skip blank rows
 
-      // Backfill a quote code for legacy rows that predate this column so
-      // every booker has a stable, unique identifier.
-      if (!row[14]) {
-        const code = "MX-LEGACY-" + (i + 2); // sheet row number
-        sheet.getRange(i + 2, 15).setValue(code);
-        row[14] = code;
-      }
-
-      bookers.push({
-        submittedAt: row[0] ? String(row[0]) : "",
-        name: row[1] ? String(row[1]) : "",
-        phone: row[2] ? String(row[2]) : "",
-        personName: row[3] ? String(row[3]) : "",
-        eventType: row[4] ? String(row[4]) : "",
-        date: row[5] ? String(row[5]) : "",
-        location: row[6] ? String(row[6]) : "",
-        budget: row[7] ? String(row[7]) : "",
-        venueType: row[8] ? String(row[8]) : "",
-        venueNote: row[9] ? String(row[9]) : "",
-        servicesCount: row[10] || 0,
-        nonVegCount: row[11] ? String(row[11]) : "",
-        vegCount: row[12] ? String(row[12]) : "",
-        notes: row[13] ? String(row[13]) : "",
-        quoteCode: row[14] ? String(row[14]) : "",
-        status: row[15] ? String(row[15]) : "New",
-        source: row[16] ? String(row[16]) : "form"
-      });
+    values.forEach(function(row, i) {
+      const booker = rowToBooker_(row, i + 2, sheet);
+      if (booker) bookers.push(booker);
     });
 
     return jsonOut_({ success: true, bookers: bookers });
@@ -111,8 +173,6 @@ function doGet(e) {
   }
 }
 
-// POST default            → append a new quote row
-// POST action=updateStatus → update the Status cell for a given quoteCode
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
@@ -122,26 +182,25 @@ function doPost(e) {
       return updateStatus_(sheet, data.quoteCode, data.status);
     }
 
-    sheet.appendRow([
-      new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-      data.name || "",
-      data.phone || "",
-      data.personName || "",
-      data.eventType || "",
-      data.date || "",
-      data.location || "",
-      data.budget || "",
-      data.venueType || "",
-      data.venueName || "",
-      data.servicesCount || 0,
-      data.nonVegCount || "",
-      data.vegCount || "",
-      data.notes || "",
-      data.quoteCode || "",
-      data.status || "New",
-      data.source || "form"
-    ]);
+    if (data.action === "deleteDuplicates") {
+      return deleteDuplicates_(sheet);
+    }
 
+    if (!data.name && !data.phone && !data.quoteCode) {
+      return jsonOut_({ success: false, error: "Missing required fields" });
+    }
+
+    const existingRow = data.quoteCode ? findRowByQuoteCode_(sheet, data.quoteCode) : -1;
+
+    if (existingRow > 0) {
+      const existing = sheet.getRange(existingRow, 1, 1, HEADERS.length).getValues()[0];
+      data.timestamp = existing[0];
+      if (!data.status && existing[15]) data.status = existing[15];
+      sheet.getRange(existingRow, 1, 1, HEADERS.length).setValues([dataToRow_(data, false)]);
+      return jsonOut_({ success: true, code: data.quoteCode, updated: true });
+    }
+
+    sheet.appendRow(dataToRow_(data, true));
     return jsonOut_({ success: true, code: data.quoteCode });
   } catch (err) {
     return jsonOut_({ success: false, error: err.toString() });
@@ -149,18 +208,47 @@ function doPost(e) {
 }
 
 function updateStatus_(sheet, quoteCode, status) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2 || !quoteCode) return jsonOut_({ success: false, error: "Not found" });
-
-  const codes = sheet.getRange(2, 15, lastRow - 1, 1).getValues();
-  for (let i = 0; i < codes.length; i++) {
-    if (String(codes[i][0]) === String(quoteCode)) {
-      sheet.getRange(i + 2, 16).setValue(status); // column 16 = Status
-      return jsonOut_({ success: true });
-    }
-  }
-  return jsonOut_({ success: false, error: "Quote code not found" });
+  const rowNum = findRowByQuoteCode_(sheet, quoteCode);
+  if (rowNum < 0) return jsonOut_({ success: false, error: "Quote code not found" });
+  sheet.getRange(rowNum, 16).setValue(status);
+  return jsonOut_({ success: true });
 }
 
-// Status options used in the Status column:
-// New → Contacted → Quoted → Confirmed → Cancelled
+function duplicateKey_(row) {
+  const code = row[14] ? String(row[14]).trim() : "";
+  if (code && !code.startsWith("MX-LEGACY-")) return "code:" + code;
+  const phone = row[2] ? String(row[2]).replace(/\D/g, "").slice(-10) : "";
+  const name = row[1] ? String(row[1]).toLowerCase().trim() : "";
+  if (phone && name) return "phone:" + phone + "|" + name;
+  return "";
+}
+
+function deleteDuplicates_(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return jsonOut_({ success: true, deleted: 0, kept: 0 });
+
+  const values = sheet.getRange(2, 1, lastRow - 1, HEADERS.length).getValues();
+  const keepIndex = {};
+
+  values.forEach(function(row, i) {
+    const key = duplicateKey_(row);
+    if (!key) return;
+    if (keepIndex[key] === undefined || new Date(row[0]) > new Date(values[keepIndex[key]][0])) {
+      keepIndex[key] = i;
+    }
+  });
+
+  const toDelete = [];
+  values.forEach(function(row, i) {
+    const key = duplicateKey_(row);
+    if (key && keepIndex[key] !== i) toDelete.push(i + 2);
+  });
+
+  toDelete.sort(function(a, b) { return b - a; }).forEach(function(r) {
+    sheet.deleteRow(r);
+  });
+
+  return jsonOut_({ success: true, deleted: toDelete.length, kept: Object.keys(keepIndex).length });
+}
+
+// Status options: New → Contacted → Quoted → Confirmed → Cancelled

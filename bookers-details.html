@@ -119,7 +119,7 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 /* ── MODAL ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex}
-.modal{background:var(--charcoal);border:1px solid var(--mid);border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal{background:var(--charcoal);border:1px solid var(--mid);border-radius:16px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .modal-header{padding:20px 24px;border-bottom:1px solid var(--mid);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--charcoal);z-index:1;border-radius:16px 16px 0 0}
 .modal-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.04em}
 .modal-title span{color:var(--gold)}
@@ -128,10 +128,16 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 .modal-body{padding:24px}
 .modal-section{margin-bottom:20px}
 .modal-section-title{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--mid)}
-.modal-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
-.modal-row-label{color:var(--muted)}
-.modal-row-val{color:var(--white);font-weight:500;text-align:right}
-.modal-services{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.modal-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:13px;border-bottom:1px solid rgba(42,42,42,.6)}
+.modal-row:last-child{border-bottom:none}
+.modal-row-label{color:var(--muted);flex-shrink:0;min-width:110px}
+.modal-row-val{color:var(--white);font-weight:500;text-align:right;word-break:break-word;max-width:62%}
+.modal-services{display:flex;flex-direction:column;gap:14px;margin-top:4px}
+.modal-service-cat{background:var(--black);border:1px solid var(--mid);border-radius:10px;padding:12px 14px}
+.modal-service-cat-name{font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px}
+.modal-service-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+.modal-service-list li{font-size:12px;color:rgba(248,244,238,.85);padding-left:14px;position:relative;line-height:1.5}
+.modal-service-list li::before{content:'✦';position:absolute;left:0;color:var(--gold);font-size:8px;top:3px}
 .modal-service-tag{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);color:var(--gold);font-size:10px;padding:4px 10px;border-radius:20px}
 .modal-footer{padding:20px 24px;border-top:1px solid var(--mid);display:flex;gap:10px}
 .modal-footer .btn-call{flex:1}
@@ -326,6 +332,47 @@ function updateBookerStatus(code, newStatus) {
 
 // ── SYNC FROM GOOGLE SHEET ──
 let isSyncing = false;
+
+function isRawWhatsAppNotes(notes) {
+  if (!notes) return false;
+  return /MAXX EVENTS/i.test(notes) && (/Quote Request/i.test(notes) || /SELECTED SERVICES/i.test(notes));
+}
+
+function mergeBookersFromSync(sheetBookers, localBookers) {
+  const localMap = {};
+  localBookers.forEach(b => { if (b.quoteCode) localMap[b.quoteCode] = b; });
+  const merged = sheetBookers.map(sb => {
+    const local = localMap[sb.quoteCode];
+    if (!local) return sb;
+    const sheetHasServices = sb.services && Object.keys(sb.services).length > 0;
+    return {
+      ...sb,
+      services: sheetHasServices ? sb.services : (local.services || {}),
+      personName: sb.personName || local.personName || "",
+      notes: isRawWhatsAppNotes(sb.notes) ? "" : (sb.notes || local.notes || ""),
+    };
+  });
+  const sheetCodes = new Set(sheetBookers.map(b => b.quoteCode));
+  localBookers.forEach(lb => {
+    if (lb.quoteCode && !sheetCodes.has(lb.quoteCode)) merged.push(lb);
+  });
+  merged.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+  return merged;
+}
+
+function renderServicesGrouped(services) {
+  if (!services || !Object.keys(services).length) return "";
+  return Object.entries(services)
+    .filter(([, items]) => items && items.length > 0)
+    .map(([cat, items]) => `
+      <div class="modal-service-cat">
+        <div class="modal-service-cat-name">${escapeHtml(cat)}</div>
+        <ul class="modal-service-list">
+          ${items.map(i => `<li>${escapeHtml(i)}</li>`).join("")}
+        </ul>
+      </div>`).join("");
+}
+
 async function syncFromSheet(manual) {
   if (!SHEETS_URL || isSyncing) return;
   isSyncing = true;
@@ -337,7 +384,8 @@ async function syncFromSheet(manual) {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Sync failed');
 
-    saveBookers(data.bookers || []);
+    const local = getBookers();
+    saveBookers(mergeBookersFromSync(data.bookers || [], local));
     renderBookers();
     if (statusEl) {
       statusEl.textContent = 'Last synced from sheet: ' + new Date().toLocaleTimeString('en-IN');
@@ -517,10 +565,8 @@ function openModal(code) {
   const body = document.getElementById('modalBody');
   const footer = document.getElementById('modalFooter');
 
-  const servicesList = b.services ? Object.entries(b.services)
-    .filter(([, items]) => items && items.length > 0)
-    .flatMap(([cat, items]) => items.map(i => `<span class="modal-service-tag">${escapeHtml(i)}</span>`))
-    .join('') : '<span style="color:var(--muted);font-size:12px">No services selected</span>';
+  const servicesHtml = renderServicesGrouped(b.services);
+  const showNotes = b.notes && !isRawWhatsAppNotes(b.notes);
 
   body.innerHTML = `
     <div class="modal-section">
@@ -528,7 +574,7 @@ function openModal(code) {
       <div class="modal-row"><span class="modal-row-label">Quote Code</span><span class="modal-row-val" style="font-family:monospace;color:var(--gold)">${escapeHtml(b.quoteCode || '—')}</span></div>
       <div class="modal-row"><span class="modal-row-label">Name</span><span class="modal-row-val">${escapeHtml(b.name || '—')}</span></div>
       <div class="modal-row"><span class="modal-row-label">WhatsApp</span><span class="modal-row-val">${escapeHtml(formatPhone(b.phone))}</span></div>
-      ${b.personName ? `<div class="modal-row"><span class="modal-row-label">Person Name</span><span class="modal-row-val">${escapeHtml(b.personName)}</span></div>` : ''}
+      ${b.personName ? `<div class="modal-row"><span class="modal-row-label">Bride / Groom</span><span class="modal-row-val">${escapeHtml(b.personName)}</span></div>` : ''}
       <div class="modal-row"><span class="modal-row-label">Status</span><span class="modal-row-val"><span class="status-pill status-${(b.status || 'New').toLowerCase()}">${escapeHtml(b.status || 'New')}</span></span></div>
     </div>
     <div class="modal-section">
@@ -541,17 +587,20 @@ function openModal(code) {
       <div class="modal-row"><span class="modal-row-label">Budget</span><span class="modal-row-val" style="color:var(--gold);font-weight:700">${escapeHtml(b.budget || '—')}</span></div>
     </div>
     <div class="modal-section">
-      <div class="modal-section-title">🍽️ Food & Services</div>
+      <div class="modal-section-title">🍽️ Food Count</div>
       <div class="modal-row"><span class="modal-row-label">Non-Veg Guests</span><span class="modal-row-val">${escapeHtml(b.nonVegCount || '—')}</span></div>
       <div class="modal-row"><span class="modal-row-label">Veg Guests</span><span class="modal-row-val">${escapeHtml(b.vegCount || '—')}</span></div>
-      ${b.servicesCount ? `<div class="modal-row"><span class="modal-row-label">Services Selected</span><span class="modal-row-val">${b.servicesCount} items</span></div>` : ''}
-      ${b.notes ? `<div class="modal-row"><span class="modal-row-label">Notes</span><span class="modal-row-val">${escapeHtml(b.notes)}</span></div>` : ''}
+      ${showNotes ? `<div class="modal-row"><span class="modal-row-label">Notes</span><span class="modal-row-val">${escapeHtml(b.notes)}</span></div>` : ''}
     </div>
-    ${servicesList !== '<span style="color:var(--muted);font-size:12px">No services selected</span>' ? `
+    ${servicesHtml ? `
+    <div class="modal-section">
+      <div class="modal-section-title">✅ Selected Services (${b.servicesCount || Object.values(b.services || {}).flat().length} items)</div>
+      <div class="modal-services">${servicesHtml}</div>
+    </div>` : (b.servicesCount ? `
     <div class="modal-section">
       <div class="modal-section-title">✅ Selected Services</div>
-      <div class="modal-services">${servicesList}</div>
-    </div>` : ''}
+      <div style="font-size:12px;color:var(--muted)">${b.servicesCount} services — re-paste from WhatsApp in Manual Entry to import full list</div>
+    </div>` : '')}
     <div class="modal-section">
       <div class="modal-section-title">⏱️ Submission</div>
       <div class="modal-row"><span class="modal-row-label">Submitted At</span><span class="modal-row-val">${escapeHtml(b.submittedAt || '—')}</span></div>
