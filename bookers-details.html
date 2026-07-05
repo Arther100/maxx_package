@@ -348,6 +348,7 @@ function mergeBookersFromSync(sheetBookers, localBookers) {
     return {
       ...sb,
       services: sheetHasServices ? sb.services : (local.services || {}),
+      vegMenus: local.vegMenus || sb.vegMenus || null,
       personName: sb.personName || local.personName || "",
       notes: isRawWhatsAppNotes(sb.notes) ? "" : (sb.notes || local.notes || ""),
     };
@@ -358,6 +359,38 @@ function mergeBookersFromSync(sheetBookers, localBookers) {
   });
   merged.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
   return merged;
+}
+
+function isMenuNotesPart(text) {
+  return /Breakfast:|Lunch:|Dinner:|🌅|☀️|🌙/.test(text || "");
+}
+
+function getUserNotesOnly(notes) {
+  if (!notes || isRawWhatsAppNotes(notes)) return "";
+  return notes.split(" | ").filter(p => !isMenuNotesPart(p)).join(" | ").trim();
+}
+
+function renderVegMenusHtml(b) {
+  const cats = [
+    { id: "breakfast", label: "Breakfast", icon: "🌅" },
+    { id: "lunch", label: "Lunch", icon: "☀️" },
+    { id: "dinner", label: "Dinner", icon: "🌙" },
+  ];
+  if (b.vegMenus && typeof b.vegMenus === "object") {
+    const rows = cats.map(cat => {
+      const sel = b.vegMenus[cat.id] || [];
+      if (!sel.length) return "";
+      return `<div class="modal-row"><span class="modal-row-label">${cat.icon} ${cat.label}</span><span class="modal-row-val">${escapeHtml(sel.join(", "))}</span></div>`;
+    }).filter(Boolean).join("");
+    if (rows) return rows;
+  }
+  if (b.notes) {
+    const menuParts = b.notes.split(" | ").filter(isMenuNotesPart);
+    if (menuParts.length) {
+      return `<div class="modal-row"><span class="modal-row-label">Veg Menus</span><span class="modal-row-val">${escapeHtml(menuParts.join(" · "))}</span></div>`;
+    }
+  }
+  return "";
 }
 
 function renderServicesGrouped(services) {
@@ -566,7 +599,9 @@ function openModal(code) {
   const footer = document.getElementById('modalFooter');
 
   const servicesHtml = renderServicesGrouped(b.services);
-  const showNotes = b.notes && !isRawWhatsAppNotes(b.notes);
+  const vegMenusHtml = renderVegMenusHtml(b);
+  const userNotes = getUserNotesOnly(b.notes);
+  const showNotes = !!userNotes;
 
   body.innerHTML = `
     <div class="modal-section">
@@ -587,10 +622,11 @@ function openModal(code) {
       <div class="modal-row"><span class="modal-row-label">Budget</span><span class="modal-row-val" style="color:var(--gold);font-weight:700">${escapeHtml(b.budget || '—')}</span></div>
     </div>
     <div class="modal-section">
-      <div class="modal-section-title">🍽️ Food Count</div>
-      <div class="modal-row"><span class="modal-row-label">Non-Veg Guests</span><span class="modal-row-val">${escapeHtml(b.nonVegCount || '—')}</span></div>
+      <div class="modal-section-title">🍽️ Catering & Menus</div>
       <div class="modal-row"><span class="modal-row-label">Veg Guests</span><span class="modal-row-val">${escapeHtml(b.vegCount || '—')}</span></div>
-      ${showNotes ? `<div class="modal-row"><span class="modal-row-label">Notes</span><span class="modal-row-val">${escapeHtml(b.notes)}</span></div>` : ''}
+      ${vegMenusHtml}
+      <div class="modal-row"><span class="modal-row-label">Non-Veg Guests</span><span class="modal-row-val">${escapeHtml(b.nonVegCount || '—')}</span></div>
+      ${showNotes ? `<div class="modal-row"><span class="modal-row-label">Notes</span><span class="modal-row-val">${escapeHtml(userNotes)}</span></div>` : ''}
     </div>
     ${servicesHtml ? `
     <div class="modal-section">

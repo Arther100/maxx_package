@@ -41,6 +41,7 @@ body { font-family: 'Inter', Arial, sans-serif; background: #f0f3fa; }
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="veg-menus.js"></script>
 
 <script type="text/babel">
 const { useState } = React;
@@ -50,6 +51,47 @@ const NAVY = "#0d1b4b";
 const NAVY2 = "#111d45";
 const WA_NUMBER = "918778667396";
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
+const VEG_MENUS = window.VEG_MENUS || {};
+const MENU_CATEGORIES = window.MENU_CATEGORIES || [];
+
+const emptyVegMenus = () => ({ breakfast: [], lunch: [], dinner: [] });
+
+function totalVegMenusSelected(vegMenus) {
+  return Object.values(vegMenus || {}).flat().length;
+}
+
+function formatVegMenusText(vegMenus) {
+  return MENU_CATEGORIES.map(cat => {
+    const sel = (vegMenus || {})[cat.id] || [];
+    if (!sel.length) return null;
+    return `${cat.icon} ${cat.label}: ${sel.join(", ")}`;
+  }).filter(Boolean).join(" | ");
+}
+
+function hasVegCatering(form, vegMenuCount) {
+  return !!(form.vegCount && vegMenuCount > 0);
+}
+
+function hasNonVegCatering(form) {
+  return !!form.nonVegCount;
+}
+
+function formatFoodWhatsAppBlock(form, vegMenuCount) {
+  const lines = [];
+  if (hasVegCatering(form, vegMenuCount)) {
+    lines.push(`🥦 Veg Guests   : ${form.vegCount}`);
+    MENU_CATEGORIES.forEach(cat => {
+      const sel = (form.vegMenus || {})[cat.id] || [];
+      if (sel.length) lines.push(`   ${cat.icon} ${cat.label}: ${sel.join(", ")}`);
+    });
+  }
+  if (hasNonVegCatering(form)) {
+    lines.push(`🍖 Non-Veg      : ${form.nonVegCount}`);
+    lines.push(`   (Non-veg menu — MAXX team will confirm options)`);
+  }
+  if (!lines.length) lines.push("  Not specified");
+  return lines.join("\n");
+}
 
 function generateCode() {
   const n = new Date();
@@ -256,7 +298,7 @@ const getServicesForEvent = (eventId) => {
   return filtered;
 };
 
-const steps = ["Event", "Details", "Venue", "Services", "Food", "Review"];
+const steps = ["Event", "Details", "Venue", "Services", "Menu", "Review"];
 
 const labelStyle = {
   display:"block", fontSize:10.5, fontWeight:700,
@@ -312,13 +354,50 @@ function ReviewRow({ k, v }) {
   );
 }
 
+function MenuCard({ menu, selected, onToggle }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{
+      border:`1.5px solid ${selected ? GOLD : "#dde2f0"}`,
+      borderRadius:10,
+      background: selected ? "rgba(201,168,76,.06)" : "#fff",
+    }}>
+      <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 12px" }}>
+        <div role="button" tabIndex={0} onClick={onToggle}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
+          style={{ flex:"1 1 auto", minWidth:0, cursor:"pointer", textAlign:"left" }}>
+          <div style={{ fontSize:13, fontWeight:700, color: selected ? NAVY : "#334", lineHeight:1.35 }}>
+            {selected && <span style={{ color:GOLD, marginRight:6 }}>✓</span>}
+            {menu.name}
+          </div>
+          <div style={{ fontSize:10, color:"#889", marginTop:2 }}>{(menu.items || []).length} items</div>
+        </div>
+        <button type="button" onClick={() => setOpen(o => !o)}
+          style={{ flexShrink:0, background:"#f0f3fa", border:"none", borderRadius:6, padding:"6px 10px", fontSize:10, color:NAVY, cursor:"pointer", fontFamily:"inherit" }}>
+          {open ? "Hide" : "View"}
+        </button>
+      </div>
+      {open && (
+        <ul style={{ listStyle:"none", margin:0, padding:"0 12px 12px 12px", borderTop:"1px solid #eef1f8" }}>
+          {menu.items.map(item => (
+            <li key={item} style={{ fontSize:11, color:"#556", padding:"4px 0", lineHeight:1.45, borderBottom:"1px solid #f4f6fb" }}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [step, setStep] = useState(0);
+  const [menuTab, setMenuTab] = useState("breakfast");
+  const [cateringTab, setCateringTab] = useState("veg");
   const [form, setForm] = useState({
     name: "", phone: "", personName: "",
     date: "", location: "", budget: "",
     venueType: "", venueNote: "",
     eventType: "", selected: {},
+    vegMenus: emptyVegMenus(),
     nonVegCount: "", vegCount: "", notes: "",
     customBudget: "", quoteCode: "",
   });
@@ -352,6 +431,19 @@ function App() {
       };
     });
   };
+
+  const toggleVegMenu = (categoryId, menuName) => {
+    setForm(f => {
+      const cur = f.vegMenus[categoryId] || [];
+      const next = cur.includes(menuName) ? cur.filter(m => m !== menuName) : [...cur, menuName];
+      return { ...f, vegMenus: { ...f.vegMenus, [categoryId]: next } };
+    });
+  };
+
+  const vegMenuCount = totalVegMenusSelected(form.vegMenus);
+  const hasVeg = hasVegCatering(form, vegMenuCount);
+  const hasNonVeg = hasNonVegCatering(form);
+  const partialVeg = !!(form.vegCount || vegMenuCount > 0) && !hasVeg;
 
   const isSelected = (cat, item) => (form.selected[cat] || []).includes(item);
   const totalSelected = Object.values(form.selected).flat().length;
@@ -402,10 +494,9 @@ function App() {
       `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
       servicesBlock || "  No services selected",
       ``,
-      `🍽️ *FOOD COUNT*`,
+      `🍽️ *CATERING & MENUS*`,
       `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
-      `🍖 Non-Veg      : ${form.nonVegCount || "Not specified"}`,
-      `🥦 Veg          : ${form.vegCount || "Not specified"}`,
+      formatFoodWhatsAppBlock(form, vegMenuCount),
       form.notes ? `\n📝 *SPECIAL NOTES*\n┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄\n${form.notes}` : null,
       ``,
       `━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -430,7 +521,7 @@ function App() {
           servicesCount: totalSelected,
           nonVegCount: form.nonVegCount || "",
           vegCount: form.vegCount || "",
-          notes: form.notes || "",
+          notes: [form.notes, formatVegMenusText(form.vegMenus)].filter(Boolean).join(" | ") || "",
           status: "New",
           source: "form",
           services: form.selected,
@@ -454,7 +545,8 @@ function App() {
         servicesCount: totalSelected,
         nonVegCount: form.nonVegCount || "",
         vegCount: form.vegCount || "",
-        notes: form.notes || "",
+        notes: [form.notes, formatVegMenusText(form.vegMenus)].filter(Boolean).join(" | ") || "",
+        vegMenus: form.vegMenus,
         services: form.selected,
         status: "New",
         submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
@@ -479,7 +571,11 @@ function App() {
       (form.budget !== "₹15,00,000+" || form.customBudget.trim());
     if (step === 2) return !!form.venueType;
     if (step === 3) return totalSelected > 0;
-    if (step === 4) return form.nonVegCount || form.vegCount;
+    if (step === 4) {
+      if (!hasVeg && !hasNonVeg) return false;
+      if (partialVeg) return false;
+      return true;
+    }
     return true;
   };
 
@@ -503,7 +599,7 @@ function App() {
             <div style={{ fontSize:10, color:GOLD, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:3 }}>Direct Contact</div>
             <div style={{ fontSize:15, fontWeight:700, color:NAVY }}>📱 +91 87786 67396</div>
           </div>
-          <button onClick={() => { setSubmitted(false); setStep(0); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},nonVegCount:"",vegCount:"",notes:"",customBudget:"",quoteCode:"" }); }}
+          <button onClick={() => { setSubmitted(false); setStep(0); setMenuTab("breakfast"); setCateringTab("veg"); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},vegMenus:emptyVegMenus(),nonVegCount:"",vegCount:"",notes:"",customBudget:"",quoteCode:"" }); }}
             style={{ background:NAVY, color:"#fff", border:"none", borderRadius:8, padding:"11px 28px", fontSize:14, fontWeight:600, cursor:"pointer" }}>
             New Enquiry
           </button>
@@ -663,27 +759,110 @@ function App() {
           </div>
         )}
 
-        {/* STEP 4 — FOOD */}
+        {/* STEP 4 — CATERING & MENU */}
         {step === 4 && (
           <div>
-            <StepTitle icon="🍽️" title="Food Count" sub="Approximate number of guests for each menu" />
-            <div style={{ marginBottom:20 }}>
-              <label style={labelStyle}>🍖 Non-Veg Guests</label>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
-                {FOOD_COUNTS.map(c => <RadioPill key={c} label={c} selected={form.nonVegCount===c} onClick={() => set("nonVegCount",c)} small />)}
-              </div>
+            <StepTitle icon="🍽️" title="Catering & Menu" sub="Switch between Veg and Non-Veg tabs — both selections are kept." />
+
+            <div style={{ background:"#fff8e6", border:`1px solid ${GOLD}`, borderRadius:8, padding:"8px 12px", marginBottom:14, fontSize:11, color:"#7a5c00", lineHeight:1.6 }}>
+              Minimum order <strong>300 plates</strong> · Fully customizable · You can pick both veg and non-veg
             </div>
-            <div style={{ marginBottom:20 }}>
-              <label style={labelStyle}>🥦 Veg Guests</label>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
-                {FOOD_COUNTS.map(c => <RadioPill key={c} label={c} selected={form.vegCount===c} onClick={() => set("vegCount",c)} small />)}
-              </div>
+
+            <label style={labelStyle}>Catering Type *</label>
+            <div style={{ display:"flex", gap:6, marginBottom:14 }}>
+              <button type="button" onClick={() => setCateringTab("veg")}
+                style={{ flex:1, background:cateringTab==="veg" ? NAVY:"#fff", color:cateringTab==="veg" ? "#fff":NAVY, border:`2px solid ${cateringTab==="veg" ? GOLD : hasVeg ? GOLD : "#dde2f0"}`, borderRadius:10, padding:"12px 10px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+                🥦 Veg {hasVeg && <span style={{ color:cateringTab==="veg" ? GOLD : "#2e7d32", marginLeft:4 }}>✓</span>}
+              </button>
+              <button type="button" onClick={() => setCateringTab("nonveg")}
+                style={{ flex:1, background:cateringTab==="nonveg" ? NAVY:"#fff", color:cateringTab==="nonveg" ? "#fff":NAVY, border:`2px solid ${cateringTab==="nonveg" ? GOLD : hasNonVeg ? GOLD : "#dde2f0"}`, borderRadius:10, padding:"12px 10px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+                🍖 Non-Veg {hasNonVeg && <span style={{ color:cateringTab==="nonveg" ? GOLD : "#2e7d32", marginLeft:4 }}>✓</span>}
+              </button>
             </div>
-            <div style={{ marginBottom:6 }}>
+
+            {cateringTab === "veg" && hasNonVeg && (
+              <div style={{ background:"#f0f3fa", border:"1px solid #dde2f0", borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize:11, color:"#556" }}>
+                🍖 Non-veg saved: <strong>{form.nonVegCount}</strong> guests — switch to Non-Veg tab to edit
+              </div>
+            )}
+
+            {cateringTab === "nonveg" && hasVeg && (
+              <div style={{ background:"#e8f4e8", border:"1px solid #b8ddb8", borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize:11, color:"#2e7d32" }}>
+                🥦 Veg saved: <strong>{form.vegCount}</strong> guests · {vegMenuCount} menu combo{vegMenuCount > 1 ? "s" : ""} — switch to Veg tab to edit
+              </div>
+            )}
+
+            {cateringTab === "veg" && (
+              <div style={{ marginBottom:20 }}>
+                <label style={labelStyle}>🥦 Veg Guest Count *</label>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:7, marginBottom:14 }}>
+                  {FOOD_COUNTS.map(c => <RadioPill key={c} label={c} selected={form.vegCount===c} onClick={() => set("vegCount",c)} small />)}
+                </div>
+
+                <label style={labelStyle}>Select Veg Menu Combos *</label>
+                <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
+                  {MENU_CATEGORIES.map(cat => (
+                    <button key={cat.id} type="button" onClick={() => setMenuTab(cat.id)}
+                      style={{ background:menuTab===cat.id ? NAVY:"#fff", color:menuTab===cat.id ? "#fff":NAVY, border:`1.5px solid ${menuTab===cat.id ? GOLD:"#dde2f0"}`, borderRadius:20, padding:"7px 14px", fontSize:11, fontWeight:menuTab===cat.id ? 700:500, cursor:"pointer", fontFamily:"inherit" }}>
+                      {cat.icon} {cat.label}
+                      {(form.vegMenus[cat.id] || []).length > 0 && (
+                        <span style={{ marginLeft:5, color:menuTab===cat.id ? GOLD : NAVY }}>({(form.vegMenus[cat.id] || []).length})</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {vegMenuCount > 0 && (
+                  <div style={{ background:"#e8f4e8", border:"1px solid #b8ddb8", borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize:11, color:"#2e7d32", fontWeight:600 }}>
+                    ✅ {vegMenuCount} veg menu combo{vegMenuCount > 1 ? "s" : ""} selected
+                  </div>
+                )}
+
+                <div style={{ display:"flex", flexDirection:"column", gap:8, maxHeight:340, overflowY:"auto", paddingRight:4 }}>
+                  {((window.VEG_MENUS || VEG_MENUS)[menuTab] || []).length === 0 ? (
+                    <div style={{ background:"#fff8e6", border:`1px solid ${GOLD}`, borderRadius:8, padding:"12px 14px", fontSize:12, color:"#7a5c00", lineHeight:1.6 }}>
+                      Menu list could not load. Please refresh the page — if this persists, contact MAXX on WhatsApp.
+                    </div>
+                  ) : (
+                    ((window.VEG_MENUS || VEG_MENUS)[menuTab] || []).map(menu => (
+                      <MenuCard key={menu.name} menu={menu}
+                        selected={(form.vegMenus[menuTab] || []).includes(menu.name)}
+                        onToggle={() => toggleVegMenu(menuTab, menu.name)} />
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {cateringTab === "nonveg" && (
+              <div style={{ marginBottom:20 }}>
+                <label style={labelStyle}>🍖 Non-Veg Guest Count *</label>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:7, marginBottom:10 }}>
+                  {FOOD_COUNTS.map(c => <RadioPill key={"nv"+c} label={c} selected={form.nonVegCount===c} onClick={() => set("nonVegCount",c)} small />)}
+                </div>
+                <div style={{ background:"#f0f3fa", border:"1px solid #dde2f0", borderRadius:8, padding:"10px 12px", fontSize:11, color:"#556", lineHeight:1.6 }}>
+                  Non-veg menu combos will be shared by the MAXX team on WhatsApp after your enquiry.
+                </div>
+              </div>
+            )}
+
+            {partialVeg && (
+              <div style={{ background:"#fff3e0", border:"1px solid #ffcc80", borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize:11, color:"#e65100" }}>
+                Complete veg guest count and at least one menu combo, or clear veg selections to continue with non-veg only
+              </div>
+            )}
+
+            {!hasVeg && !hasNonVeg && (
+              <div style={{ fontSize:12, color:"#889", textAlign:"center", padding:"8px 0 12px" }}>
+                Fill in at least one tab — veg, non-veg, or both
+              </div>
+            )}
+
+            <div style={{ marginBottom:6, marginTop:8 }}>
               <label style={labelStyle}>Special Requirements / Notes</label>
               <textarea value={form.notes} onChange={e => set("notes",e.target.value)}
-                placeholder="e.g. Jain food, specific timing, outdoor setup notes..."
-                style={{ width:"100%", border:"1.5px solid #dde2f0", borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, minHeight:80, resize:"vertical", outline:"none", fontFamily:"inherit", boxSizing:"border-box" }} />
+                placeholder="e.g. Jain food, no onion garlic, specific meal timing..."
+                style={{ width:"100%", border:"1.5px solid #dde2f0", borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, minHeight:70, resize:"vertical", outline:"none", fontFamily:"inherit", boxSizing:"border-box" }} />
             </div>
           </div>
         )}
@@ -713,9 +892,24 @@ function App() {
                 </div>
               ))}
             </ReviewCard>
-            <ReviewCard label="🍽️ Food Count">
-              <ReviewRow k="Non-Veg Guests" v={form.nonVegCount || "—"} />
-              <ReviewRow k="Veg Guests" v={form.vegCount || "—"} />
+            <ReviewCard label="🍽️ Catering & Menus">
+              {!hasVeg && !hasNonVeg && <ReviewRow k="Selection" v="—" />}
+              {hasVeg && (
+                <>
+                  <ReviewRow k="Veg Guests" v={form.vegCount || "—"} />
+                  {MENU_CATEGORIES.map(cat => {
+                    const sel = (form.vegMenus || {})[cat.id] || [];
+                    if (!sel.length) return null;
+                    return <ReviewRow key={cat.id} k={`${cat.icon} ${cat.label}`} v={sel.join(", ")} />;
+                  })}
+                </>
+              )}
+              {hasNonVeg && (
+                <>
+                  <ReviewRow k="Non-Veg Guests" v={form.nonVegCount || "—"} />
+                  <ReviewRow k="Non-Veg Menu" v="To be confirmed by MAXX" />
+                </>
+              )}
               {form.notes && <ReviewRow k="Notes" v={form.notes} />}
             </ReviewCard>
             <div style={{ background:"#e8f5e8", border:"1px solid #b8ddb8", borderRadius:10, padding:"12px 16px", marginBottom:16, fontSize:12, color:"#2e7d32", lineHeight:1.75 }}>
