@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — MAXX Events</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0A0A0A;
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --white: #F8F4EE;
+  --charcoal: #1A1A1A;
+  --mid: #2A2A2A;
+  --muted: #666;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:420px;background:var(--charcoal);border:1px solid var(--mid);border-radius:14px;padding:28px}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.06em;text-align:center;margin-bottom:6px}
+.logo span{color:var(--gold)}
+.subtitle{text-align:center;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:24px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.field input{width:100%;background:var(--black);border:1px solid var(--mid);border-radius:8px;padding:12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:14px;outline:none}
+.field input:focus{border-color:rgba(201,168,76,.45)}
+.btn{width:100%;background:var(--gold);color:var(--black);border:none;border-radius:8px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn:hover{background:var(--gold-light)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.error{display:none;margin-top:12px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.35);color:#ff8f8f;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5}
+.hint{margin-top:16px;font-size:11px;color:var(--muted);line-height:1.6;text-align:center}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">MA<span>XX</span> ADMIN</div>
+    <div class="subtitle">Secure Sign In</div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="username" required placeholder="superadmin@maxxevents.local">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required placeholder="Your password">
+      </div>
+      <button id="loginBtn" class="btn" type="submit">Sign In</button>
+      <div id="errorBox" class="error"></div>
+    </form>
+
+    <p class="hint">Use your Supabase Auth account linked to <code>public.users</code>.</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (async function () {
+      const form = document.getElementById("loginForm");
+      const emailEl = document.getElementById("email");
+      const passwordEl = document.getElementById("password");
+      const loginBtn = document.getElementById("loginBtn");
+      const errorBox = document.getElementById("errorBox");
+
+      function showError(message) {
+        errorBox.style.display = "block";
+        errorBox.textContent = message;
+      }
+
+      try {
+        const session = await MaxxAuth.getSession();
+        if (session) {
+          window.location.href = "index.html";
+          return;
+        }
+      } catch (err) {
+        showError(err.message || "Failed to check existing session.");
+      }
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        errorBox.style.display = "none";
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Signing in...";
+
+        try {
+          await MaxxAuth.signIn(emailEl.value.trim(), passwordEl.value);
+          await MaxxAuth.getMe();
+          window.location.href = "index.html";
+        } catch (err) {
+          showError(err.message || "Login failed. Check email/password and profile mapping.");
+        } finally {
+          loginBtn.disabled = false;
+          loginBtn.textContent = "Sign In";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

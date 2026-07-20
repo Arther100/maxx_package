@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — MAXX Events</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0A0A0A;
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --white: #F8F4EE;
+  --charcoal: #1A1A1A;
+  --mid: #2A2A2A;
+  --muted: #666;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh}
+.header{background:var(--charcoal);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.06em}
+.brand span{color:var(--gold)}
+.btn{background:transparent;border:1px solid rgba(201,168,76,.35);color:var(--gold);border-radius:8px;padding:9px 14px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn:hover{background:rgba(201,168,76,.08)}
+.wrap{max-width:900px;margin:0 auto;padding:28px 20px 40px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:.04em;margin-bottom:8px}
+.title span{color:var(--gold)}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;padding:16px}
+.label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.value{font-size:15px;font-weight:600;word-break:break-word}
+.role-pill{display:inline-block;margin-top:8px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:rgba(201,168,76,.12);color:var(--gold)}
+.panel{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;padding:16px}
+.panel h2{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.panel p{font-size:13px;color:rgba(248,244,238,.85);line-height:1.6}
+.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.link{display:inline-block;text-decoration:none;color:var(--gold);border:1px solid rgba(201,168,76,.35);border-radius:8px;padding:8px 12px;font-size:12px}
+.link:hover{background:rgba(201,168,76,.08)}
+.error{display:none;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.35);color:#ff8f8f;border-radius:8px;padding:12px;font-size:13px;line-height:1.5}
+.loading{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+  <header class="header">
+    <div class="brand">MA<span>XX</span> ADMIN</div>
+    <button id="logoutBtn" class="btn" type="button">Sign Out</button>
+  </header>
+
+  <main class="wrap">
+    <h1 class="title">Welcome <span id="welcomeName">...</span></h1>
+    <p class="subtitle">Authenticated profile loaded from Supabase + RLS.</p>
+
+    <div id="errorBox" class="error"></div>
+    <div id="loadingBox" class="loading">Loading profile...</div>
+
+    <section id="profileSection" style="display:none">
+      <div class="grid">
+        <div class="card">
+          <div class="label">Email</div>
+          <div id="emailValue" class="value">-</div>
+        </div>
+        <div class="card">
+          <div class="label">Role</div>
+          <div id="roleValue" class="value">-</div>
+          <span id="rolePill" class="role-pill"></span>
+        </div>
+        <div class="card">
+          <div class="label">Organization</div>
+          <div id="orgValue" class="value">-</div>
+        </div>
+        <div class="card">
+          <div class="label">Organization ID</div>
+          <div id="orgIdValue" class="value">-</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Next Modules</h2>
+        <p>Foundation is complete. Next we can wire Events CRUD and connect the booking form to database inserts.</p>
+        <div class="links">
+          <a class="link" href="../bookers-details.html">Bookers Details</a>
+          <a class="link" href="../manual-entry.html">Manual Entry</a>
+          <a class="link" href="../booking_form/index.html">Booking Form</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (async function () {
+      const errorBox = document.getElementById("errorBox");
+      const loadingBox = document.getElementById("loadingBox");
+      const profileSection = document.getElementById("profileSection");
+      const welcomeName = document.getElementById("welcomeName");
+      const emailValue = document.getElementById("emailValue");
+      const roleValue = document.getElementById("roleValue");
+      const rolePill = document.getElementById("rolePill");
+      const orgValue = document.getElementById("orgValue");
+      const orgIdValue = document.getElementById("orgIdValue");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      function showError(message) {
+        loadingBox.style.display = "none";
+        errorBox.style.display = "block";
+        errorBox.textContent = message;
+      }
+
+      logoutBtn.addEventListener("click", async function () {
+        try {
+          await MaxxAuth.signOut();
+          window.location.href = "login.html";
+        } catch (err) {
+          showError(err.message || "Failed to sign out.");
+        }
+      });
+
+      try {
+        const session = await MaxxAuth.requireAuth("login.html");
+        if (!session) return;
+
+        const me = await MaxxAuth.getMe();
+        welcomeName.textContent = me.full_name || me.email;
+        emailValue.textContent = me.email || "-";
+        roleValue.textContent = me.role || "-";
+        rolePill.textContent = me.role || "unknown";
+        orgValue.textContent = me.organization_name || (me.role === "platform_owner" ? "Global (no org scope)" : "-");
+        orgIdValue.textContent = me.organization_id || "null";
+
+        loadingBox.style.display = "none";
+        profileSection.style.display = "block";
+      } catch (err) {
+        showError(err.message || "Failed to load profile.");
+      }
+    })();
+  </script>
+</body>
+</html>
