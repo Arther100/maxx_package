@@ -43,6 +43,9 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 .page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);letter-spacing:.04em;position:relative;z-index:1;margin-bottom:8px}
 .page-title span{color:var(--gold)}
 .page-sub{font-size:14px;color:var(--muted);position:relative;z-index:1;max-width:500px;margin:0 auto}
+.auth-banner{max-width:1200px;margin:0 auto 16px;padding:0 5vw;font-size:12px;color:var(--muted)}
+.auth-banner strong{color:var(--gold)}
+.auth-banner a{color:var(--gold);text-decoration:none}
 
 /* ── STATS BAR ── */
 .stats-bar{max-width:1200px;margin:0 auto 32px;padding:0 5vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
@@ -191,8 +194,10 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
   <div class="page-header-bg"></div>
   <div class="page-eyebrow">Lead Management</div>
   <h1 class="page-title">BOOKERS <span>DETAILS</span></h1>
-  <p class="page-sub">View all quote requests, contact bookers directly with one click, and manage your leads.</p>
+  <p class="page-sub">Shows DB + local + Sheet leads together. Use “Restore from Sheet” to bring back old bookers.</p>
 </section>
+
+<div class="auth-banner" id="authBanner">Checking login…</div>
 
 <!-- STATS BAR -->
 <div class="stats-bar" id="statsBar">
@@ -230,7 +235,9 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
   </div>
   <div style="display:flex;gap:8px">
     <a href="manual-entry.html" class="btn-export" style="text-decoration:none">➕ Manual Entry</a>
-    <button class="btn-export" onclick="syncFromSheet(true)">🔄 Sync</button>
+    <button class="btn-export" onclick="syncFromDb(true)">🔄 Sync DB</button>
+    <button class="btn-export" onclick="syncFromSheet(true)">📄 Restore from Sheet</button>
+    <button class="btn-export" onclick="importLocalAndSheetToDb()">⬆ Import to DB</button>
     <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
     <button class="btn-clear" onclick="clearAll()">🗑 Clear All</button>
   </div>
@@ -286,6 +293,10 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin/config.js"></script>
+<script src="admin/js/auth.js"></script>
+<script src="js/maxx-leads.js"></script>
 <script>
 // ── CONSTANTS ──
 const STORAGE_KEY = "maxx_bookers";
@@ -294,9 +305,11 @@ const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu
 
 // ── STATE ──
 let currentFilter = "all";
+let dbBookers = null; // null = not loaded yet; [] = loaded empty
+let currentUser = null;
 
 // ── DATA ACCESS ──
-function getBookers() {
+function getLocalBookers() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -304,6 +317,34 @@ function getBookers() {
     console.error("Failed to read bookers from localStorage:", e);
     return [];
   }
+}
+
+function getBookers() {
+  // Always merge DB + local so old bookers are never hidden by an empty DB.
+  return mergeBookersByQuoteCode(Array.isArray(dbBookers) ? dbBookers : [], getLocalBookers());
+}
+
+function mergeBookersByQuoteCode(primaryList, secondaryList) {
+  const map = {};
+  (secondaryList || []).forEach((b) => {
+    if (!b || !b.quoteCode) return;
+    map[b.quoteCode] = b;
+  });
+  (primaryList || []).forEach((b) => {
+    if (!b || !b.quoteCode) return;
+    const prev = map[b.quoteCode];
+    map[b.quoteCode] = prev
+      ? {
+          ...prev,
+          ...b,
+          services: (b.services && Object.keys(b.services).length) ? b.services : (prev.services || {}),
+          vegMenus: (b.vegMenus && Object.keys(b.vegMenus || {}).length) ? b.vegMenus : (prev.vegMenus || null),
+          personName: b.personName || prev.personName || "",
+          notes: b.notes || prev.notes || "",
+        }
+      : b;
+  });
+  return Object.values(map).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
 }
 
 function saveBookers(bookers) {
@@ -314,20 +355,88 @@ function saveBookers(bookers) {
   }
 }
 
-function updateBookerStatus(code, newStatus) {
-  const bookers = getBookers();
+async function updateBookerStatus(code, newStatus) {
+  // Update DB first when authenticated
+  if (currentUser && window.MaxxLeads) {
+    try {
+      await MaxxLeads.updateLeadStatus(code, newStatus);
+      if (Array.isArray(dbBookers)) {
+        const idx = dbBookers.findIndex(b => b.quoteCode === code);
+        if (idx !== -1) dbBookers[idx].status = newStatus;
+      }
+    } catch (e) {
+      console.error("Failed to update lead status in DB:", e);
+      // Still allow local/sheet status update if lead is not in DB yet
+    }
+  }
+
+  // Keep localStorage in sync (fallback)
+  const bookers = getLocalBookers();
   const idx = bookers.findIndex(b => b.quoteCode === code);
   if (idx !== -1) {
     bookers[idx].status = newStatus;
     saveBookers(bookers);
-    renderBookers();
+  } else {
+    // Ensure status change persists locally even for sheet-only rows
+    const fromView = getBookers().find(b => b.quoteCode === code);
+    if (fromView) {
+      bookers.push({ ...fromView, status: newStatus });
+      saveBookers(bookers);
+    }
   }
+
+  if (Array.isArray(dbBookers)) {
+    const dbIdx = dbBookers.findIndex(b => b.quoteCode === code);
+    if (dbIdx !== -1) dbBookers[dbIdx].status = newStatus;
+  }
+
+  renderBookers();
 
   if (!SHEETS_URL) return;
   fetch(SHEETS_URL, {
     method: "POST",
     body: JSON.stringify({ action: "updateStatus", quoteCode: code, status: newStatus })
   }).catch(e => console.error("Failed to sync status update:", e));
+}
+
+async function syncFromDb(manual) {
+  const statusEl = document.getElementById('syncStatus');
+  if (!window.MaxxLeads) {
+    if (statusEl) statusEl.textContent = 'Supabase leads helper not loaded.';
+    return;
+  }
+  if (manual && statusEl) statusEl.textContent = 'Loading from DB…';
+
+  try {
+    const fromDb = await MaxxLeads.listLeads();
+    dbBookers = fromDb;
+
+    // IMPORTANT: never wipe local history with an empty DB result.
+    // Merge DB into existing local cache instead of replacing it.
+    const mergedLocal = mergeBookersByQuoteCode(fromDb, getLocalBookers());
+    saveBookers(mergedLocal);
+
+    renderBookers();
+    if (statusEl) {
+      statusEl.textContent = 'Loaded from DB: ' + new Date().toLocaleTimeString('en-IN') +
+        ' · DB ' + fromDb.length + ' · shown ' + getBookers().length + ' (DB + local/sheet)';
+    }
+
+    // If DB is empty, automatically restore from Google Sheet.
+    if (fromDb.length === 0) {
+      await syncFromSheet(true);
+    }
+  } catch (e) {
+    console.error('Failed to load leads from DB:', e);
+    if (statusEl) {
+      statusEl.textContent = 'DB load failed — showing local/sheet fallback. ' + (e.message || '');
+    }
+    if (!Array.isArray(dbBookers)) {
+      dbBookers = null;
+      renderBookers();
+    }
+    await syncFromSheet(true);
+  }
 }
 
 // ── SYNC FROM GOOGLE SHEET ──
@@ -410,27 +519,65 @@ async function syncFromSheet(manual) {
   if (!SHEETS_URL || isSyncing) return;
   isSyncing = true;
   const statusEl = document.getElementById('syncStatus');
-  if (manual && statusEl) statusEl.textContent = 'Syncing…';
+  if (manual && statusEl) statusEl.textContent = 'Restoring from Google Sheet…';
 
   try {
     const res = await fetch(SHEETS_URL);
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Sync failed');
 
-    const local = getBookers();
-    saveBookers(mergeBookersFromSync(data.bookers || [], local));
+    const local = getLocalBookers();
+    const merged = mergeBookersFromSync(data.bookers || [], local);
+    saveBookers(merged);
     renderBookers();
     if (statusEl) {
-      statusEl.textContent = 'Last synced from sheet: ' + new Date().toLocaleTimeString('en-IN');
+      statusEl.textContent = 'Restored from Sheet: ' + new Date().toLocaleTimeString('en-IN') +
+        ' · sheet ' + (data.bookers || []).length +
+        ' · shown ' + getBookers().length;
     }
   } catch (e) {
     console.error('Failed to sync from sheet:', e);
     if (statusEl) {
-      statusEl.textContent = 'Could not reach the sheet — showing last known data.';
+      statusEl.textContent = 'Could not reach the sheet — showing last known local/DB data.';
     }
   } finally {
     isSyncing = false;
   }
+}
+
+async function importLocalAndSheetToDb() {
+  if (!currentUser || !window.MaxxLeads) {
+    alert('Please sign in as superadmin first.');
+    return;
+  }
+  const statusEl = document.getElementById('syncStatus');
+  if (statusEl) statusEl.textContent = 'Importing local/sheet leads into DB…';
+
+  // Ensure latest sheet data is in local cache first
+  await syncFromSheet(true);
+  const rows = getLocalBookers();
+  if (!rows.length) {
+    alert('No local/sheet leads found to import.');
+    return;
+  }
+
+  let ok = 0;
+  let fail = 0;
+  for (const row of rows) {
+    try {
+      await MaxxLeads.createPublicLead({
+        ...row,
+        source: row.source || 'import',
+      });
+      ok += 1;
+    } catch (e) {
+      console.error('Import failed for', row.quoteCode, e);
+      fail += 1;
+    }
+  }
+
+  await syncFromDb(true);
+  alert(`Import finished.\nSaved to DB: ${ok}\nFailed: ${fail}`);
 }
 
 // ── FILTERING ──
@@ -639,7 +786,7 @@ function openModal(code) {
     </div>` : '')}
     <div class="modal-section">
       <div class="modal-section-title">⏱️ Submission</div>
-      <div class="modal-row"><span class="modal-row-label">Submitted At</span><span class="modal-row-val">${escapeHtml(b.submittedAt || '—')}</span></div>
+      <div class="modal-row"><span class="modal-row-label">Submitted At</span><span class="modal-row-val">${escapeHtml(b.submittedAt ? new Date(b.submittedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '—')}</span></div>
     </div>
 
     <div class="modal-section" style="background:var(--black);border:1px solid var(--mid);border-radius:10px;padding:16px;margin-top:8px">
@@ -712,7 +859,7 @@ function exportCSV() {
 
 // ── CLEAR ALL ──
 function clearAll() {
-  if (confirm('Are you sure you want to delete ALL booker records? This cannot be undone.')) {
+  if (confirm('Clear LOCAL browser cache only?\n\nThis does NOT delete Google Sheet data or Supabase DB leads.\nClick "Restore from Sheet" afterward to bring old bookers back.')) {
     localStorage.removeItem(STORAGE_KEY);
     renderBookers();
   }
@@ -770,19 +917,42 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
 
-// ── INIT ──
-renderBookers();
-syncFromSheet();
+// ── INIT (auth + DB primary) ──
+(async function initLeadsDashboard() {
+  const banner = document.getElementById('authBanner');
+  renderBookers();
+
+  try {
+    const session = await MaxxAuth.requireAuth('admin/login.html');
+    if (!session) return;
+
+    currentUser = await MaxxAuth.getMe();
+    if (banner) {
+      banner.innerHTML = `Signed in as <strong>${escapeHtml(currentUser.email)}</strong> · role <strong>${escapeHtml(currentUser.role)}</strong> · org <strong>${escapeHtml(currentUser.organization_name || 'Global')}</strong> · <a href="admin/index.html">Admin</a>`;
+    }
+
+    await syncFromDb(true);
+  } catch (e) {
+    console.error(e);
+    if (banner) {
+      banner.textContent = 'Auth/DB unavailable — showing local/sheet fallback. ' + (e.message || '');
+    }
+    syncFromSheet();
+  }
+})();
 
 // ── LISTEN FOR STORAGE CHANGES FROM OTHER TABS ──
 window.addEventListener('storage', function(e) {
-  if (e.key === STORAGE_KEY) {
+  if (e.key === STORAGE_KEY && !Array.isArray(dbBookers)) {
     renderBookers();
   }
 });
 
-// ── REFRESH FROM SHEET EVERY 30 SECONDS ──
-setInterval(syncFromSheet, 30000);
+// ── REFRESH FROM DB EVERY 30 SECONDS ──
+setInterval(function () {
+  if (currentUser) syncFromDb(false);
+  else syncFromSheet();
+}, 30000);
 </script>
 </body>
 </html>

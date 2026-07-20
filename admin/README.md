@@ -31,10 +31,13 @@ Use the passwords you set in Supabase Auth.
 
 - `admin/login.html` - sign in page
 - `admin/index.html` - protected dashboard, loads profile via `get_me()`
+- `admin/events.html` - Events create + list (org-scoped via RLS)
 - `admin/js/auth.js` - shared auth helpers
+- `admin/js/events.js` - events create/list helpers
 - `admin/config.example.js` - template config (copy to `config.js`)
 
 ## Notes
 
 - `config.js` should not be committed (contains project keys).
 - Login verifies both Auth session and `public.users` profile mapping.
+- Events page requires login. Create allowed for `platform_owner`, `superadmin`, `opsadmin`, `manager`.

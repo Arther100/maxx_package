@@ -41,6 +41,9 @@ body { font-family: 'Inter', Arial, sans-serif; background: #f0f3fa; }
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../admin/config.js"></script>
+<script src="../js/maxx-leads.js"></script>
 <script src="veg-menus.js"></script>
 
 <script type="text/babel">
@@ -453,7 +456,7 @@ function App() {
     ? `₹${form.customBudget}`
     : form.budget;
 
-  const buildWhatsApp = () => {
+  const buildWhatsApp = async () => {
     const code = generateCode();
     const selectedEvent = EVENT_TYPES.find(e => e.id === form.eventType);
     const selectedVenue = VENUE_TYPES.find(v => v.id === form.venueType);
@@ -503,6 +506,39 @@ function App() {
       `_Sent via MAXX Events Booking Form_`,
     ].filter(v => v !== null).join("\n");
 
+    const bookerData = {
+      quoteCode: code,
+      name: form.name,
+      phone: form.phone,
+      personName: form.personName || "",
+      eventType: selectedEvent?.label || form.eventType,
+      date: form.date,
+      location: form.location,
+      venueType: selectedVenue?.label || form.venueType,
+      venueNote: form.venueNote || "",
+      budget: budgetDisplay,
+      servicesCount: totalSelected,
+      nonVegCount: form.nonVegCount || "",
+      vegCount: form.vegCount || "",
+      notes: [form.notes, formatVegMenusText(form.vegMenus)].filter(Boolean).join(" | ") || "",
+      vegMenus: form.vegMenus,
+      services: form.selected,
+      status: "New",
+      source: "form",
+      submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+    };
+
+    // Priority 6: save lead to Supabase DB (primary)
+    if (window.MaxxLeads && window.MaxxLeads.createPublicLead) {
+      try {
+        await window.MaxxLeads.createPublicLead(bookerData);
+      } catch (e) {
+        console.error("Failed to save lead to Supabase:", e);
+        alert("Saved locally/WhatsApp, but DB save failed: " + (e.message || e) + "\n\nCheck that migration 005 was run in Supabase.");
+      }
+    }
+
+    // Keep Sheets sync (legacy)
     if (SHEETS_URL) {
       fetch(SHEETS_URL, {
         method: "POST",
@@ -529,28 +565,8 @@ function App() {
       }).catch(() => {});
     }
 
-    // Save to localStorage for Bookers Details page
+    // Keep localStorage fallback for Bookers Details offline view
     try {
-      const bookerData = {
-        quoteCode: code,
-        name: form.name,
-        phone: form.phone,
-        personName: form.personName || "",
-        eventType: selectedEvent?.label || form.eventType,
-        date: form.date,
-        location: form.location,
-        venueType: selectedVenue?.label || form.venueType,
-        venueNote: form.venueNote || "",
-        budget: budgetDisplay,
-        servicesCount: totalSelected,
-        nonVegCount: form.nonVegCount || "",
-        vegCount: form.vegCount || "",
-        notes: [form.notes, formatVegMenusText(form.vegMenus)].filter(Boolean).join(" | ") || "",
-        vegMenus: form.vegMenus,
-        services: form.selected,
-        status: "New",
-        submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-      };
       const existing = JSON.parse(localStorage.getItem("maxx_bookers") || "[]");
       const dupIdx = existing.findIndex(b => b.quoteCode === code);
       if (dupIdx !== -1) existing[dupIdx] = bookerData;

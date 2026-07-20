@@ -6,6 +6,8 @@ This project now includes an additive migration at:
 - `db/migrations/002_supabase_auth_rls_alignment.sql`
 - `db/migrations/003_align_auth_user_ids.sql`
 - `db/migrations/004_get_me_rpc.sql`
+- `db/migrations/005_leads_booking_pipeline.sql`
+- `db/migrations/006_events_details_and_settings.sql`
 
 It sets up:
 
@@ -32,11 +34,15 @@ It sets up:
 3. Run `002_supabase_auth_rls_alignment.sql`
 4. Run `003_align_auth_user_ids.sql` (fixes `public.users.id` = `auth.users.id`)
 5. Run `004_get_me_rpc.sql` (profile RPC used by admin frontend)
+6. Run `005_leads_booking_pipeline.sql` (booking form → DB + leads dashboard)
+7. Run `006_events_details_and_settings.sql` (venue/maps/manager/upload/allowed features)
 
 Migration `002` rebuilds policies to use authenticated user context.
 Migration `003` is required if verification shows `id_aligned = false`.
 Run `003` in Supabase SQL Editor (it uses a `SECURITY DEFINER` function to bypass RLS safely).
 Migration `004` adds `get_me()` for frontend profile bootstrap.
+Migration `005` adds `leads` table, org-scoped RLS, and `create_public_lead()` for the public booking form.
+Migration `006` extends `events` with location, venue, maps link, manager settings, upload window, and allowed features.
 
 ## Verification queries
 

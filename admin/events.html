@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events — MAXX Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0A0A0A;
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --white: #F8F4EE;
+  --charcoal: #1A1A1A;
+  --mid: #2A2A2A;
+  --muted: #666;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh}
+.header{background:var(--charcoal);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.06em;text-decoration:none;color:var(--white)}
+.brand span{color:var(--gold)}
+.nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn,.link-btn{background:transparent;border:1px solid rgba(201,168,76,.35);color:var(--gold);border-radius:8px;padding:9px 14px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:none;display:inline-block}
+.btn:hover,.link-btn:hover{background:rgba(201,168,76,.08)}
+.btn-primary{background:var(--gold);color:var(--black);border:none;font-weight:700}
+.btn-primary:hover{background:var(--gold-light)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 48px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:.04em;margin-bottom:6px}
+.title span{color:var(--gold)}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:22px}
+.grid{display:grid;grid-template-columns:1fr 1.15fr;gap:16px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;padding:16px}
+.panel h2{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+.section-label{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 10px;padding-top:8px;border-top:1px solid var(--mid)}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--black);border:1px solid var(--mid);border-radius:8px;padding:11px 12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none}
+.field textarea{min-height:70px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(201,168,76,.45)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:640px){.two-col{grid-template-columns:1fr}}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:640px){.checks{grid-template-columns:1fr}}
+.check{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25);border:1px solid var(--mid);border-radius:8px;padding:8px 10px;font-size:12px}
+.check input{accent-color:var(--gold)}
+.meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+.error{display:none;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.35);color:#ff8f8f;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.success{display:none;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.35);color:#7dffb0;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.list{display:flex;flex-direction:column;gap:12px}
+.item{border:1px solid var(--mid);border-radius:10px;padding:14px;background:rgba(0,0,0,.25)}
+.item-title{font-size:16px;font-weight:600;margin-bottom:8px}
+.item-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:rgba(248,244,238,.8);margin-top:4px}
+.item-row span:first-child{color:var(--muted);flex-shrink:0}
+.item-row span:last-child{text-align:right}
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(201,168,76,.12);color:var(--gold)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid rgba(201,168,76,.3);color:rgba(248,244,238,.85)}
+.map-wrap{margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid var(--mid);background:#111}
+.map-wrap iframe{width:100%;height:180px;border:0;display:block}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.empty{color:var(--muted);font-size:13px;padding:18px 4px}
+.loading{color:var(--muted);font-size:13px}
+.hint{font-size:11px;color:var(--muted);margin-top:-4px;margin-bottom:10px;line-height:1.5}
+</style>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="index.html">MA<span>XX</span> ADMIN</a>
+    <div class="nav">
+      <a class="link-btn" href="index.html">Dashboard</a>
+      <a class="link-btn" href="../bookers-details.html">Leads</a>
+      <button id="logoutBtn" class="btn" type="button">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="title">Events <span>CRUD</span></h1>
+    <p class="subtitle">Venue, maps directions, manager settings, upload window, and allowed features.</p>
+    <p class="meta" id="userMeta">Loading…</p>
+    <p class="meta" id="migrationHint" style="display:none;color:#ffb4b4">If create fails mentioning unknown column, run migration 006 in Supabase first.</p>
+
+    <div id="errorBox" class="error"></div>
+    <div id="successBox" class="success"></div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Create Event</h2>
+        <form id="createForm">
+          <div class="field">
+            <label for="title">Title *</label>
+            <input id="title" type="text" required placeholder="e.g. Sharma Wedding Reception" maxlength="160">
+          </div>
+          <div class="two-col">
+            <div class="field">
+              <label for="eventDate">Event Date</label>
+              <input id="eventDate" type="date">
+            </div>
+            <div class="field">
+              <label for="status">Status</label>
+              <select id="status">
+                <option value="draft">Draft</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section-label">Location & Venue</div>
+          <div class="field">
+            <label for="location">Location / City</label>
+            <input id="location" type="text" placeholder="e.g. Chengalpattu, Chennai">
+          </div>
+          <div class="field">
+            <label for="venueName">Venue Name</label>
+            <input id="venueName" type="text" placeholder="e.g. Sri Murugan Kalyana Mandapam">
+          </div>
+          <div class="field">
+            <label for="venueAddress">Venue Address</label>
+            <textarea id="venueAddress" placeholder="Full address for Google Maps directions"></textarea>
+          </div>
+          <div class="field">
+            <label for="mapsUrl">Google Maps Link (optional)</label>
+            <input id="mapsUrl" type="url" placeholder="Paste Google Maps place/share URL">
+          </div>
+          <p class="hint">If address is filled, list cards show map preview + Directions button (opens Google Maps).</p>
+
+          <div class="section-label">Event Manager Settings</div>
+          <div class="two-col">
+            <div class="field">
+              <label for="eventManagerName">Event Manager Name</label>
+              <input id="eventManagerName" type="text" placeholder="Manager full name">
+            </div>
+            <div class="field">
+              <label for="eventManagerPhone">Manager Phone</label>
+              <input id="eventManagerPhone" type="tel" placeholder="+91 ...">
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="field">
+              <label for="uploadOpensAt">Upload Opens At</label>
+              <input id="uploadOpensAt" type="datetime-local">
+            </div>
+            <div class="field">
+              <label for="uploadClosesAt">Upload Closes At</label>
+              <input id="uploadClosesAt" type="datetime-local">
+            </div>
+          </div>
+
+          <div class="section-label">Allowed Features</div>
+          <div id="allowedFeatures" class="checks"></div>
+
+          <div class="field" style="margin-top:12px">
+            <label for="notes">Internal Notes</label>
+            <textarea id="notes" placeholder="Special instructions for this event"></textarea>
+          </div>
+
+          <button id="createBtn" class="btn btn-primary" type="submit" style="width:100%;padding:12px;margin-top:4px">Create Event</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px">
+          <h2 style="margin:0">Event List</h2>
+          <button id="refreshBtn" class="btn" type="button">Refresh</button>
+        </div>
+        <div id="loadingBox" class="loading">Loading events…</div>
+        <div id="eventsList" class="list" style="display:none"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/events.js"></script>
+  <script>
+    (async function () {
+      const errorBox = document.getElementById("errorBox");
+      const successBox = document.getElementById("successBox");
+      const loadingBox = document.getElementById("loadingBox");
+      const eventsList = document.getElementById("eventsList");
+      const userMeta = document.getElementById("userMeta");
+      const createForm = document.getElementById("createForm");
+      const createBtn = document.getElementById("createBtn");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const allowedWrap = document.getElementById("allowedFeatures");
+      const migrationHint = document.getElementById("migrationHint");
+
+      let me = null;
+
+      function showError(message) {
+        successBox.style.display = "none";
+        errorBox.style.display = "block";
+        errorBox.textContent = message;
+        if (/column|schema cache|does not exist/i.test(message || "")) {
+          migrationHint.style.display = "block";
+        }
+      }
+
+      function showSuccess(message) {
+        errorBox.style.display = "none";
+        successBox.style.display = "block";
+        successBox.textContent = message;
+      }
+
+      function clearMessages() {
+        errorBox.style.display = "none";
+        successBox.style.display = "none";
+      }
+
+      function formatDate(value) {
+        if (!value) return "—";
+        try {
+          const d = new Date(value);
+          if (Number.isNaN(d.getTime())) return value;
+          return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+        } catch {
+          return value;
+        }
+      }
+
+      function formatDateTime(value) {
+        if (!value) return "—";
+        try {
+          const d = new Date(value);
+          if (Number.isNaN(d.getTime())) return value;
+          return d.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+        } catch {
+          return value;
+        }
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str == null ? "" : String(str);
+        return div.innerHTML;
+      }
+
+      function featureLabel(key) {
+        const found = MaxxEvents.ALLOWED_FEATURE_OPTIONS.find(function (f) { return f.key === key; });
+        return found ? found.label : key;
+      }
+
+      function renderAllowedChecks() {
+        allowedWrap.innerHTML = MaxxEvents.ALLOWED_FEATURE_OPTIONS.map(function (f) {
+          return (
+            '<label class="check">' +
+              '<input type="checkbox" name="allowedFeature" value="' + escapeHtml(f.key) + '">' +
+              '<span>' + escapeHtml(f.label) + '</span>' +
+            '</label>'
+          );
+        }).join("");
+      }
+
+      function getSelectedFeatures() {
+        return Array.from(document.querySelectorAll('input[name="allowedFeature"]:checked'))
+          .map(function (el) { return el.value; });
+      }
+
+      function renderEvents(events) {
+        loadingBox.style.display = "none";
+        eventsList.style.display = "flex";
+
+        if (!events.length) {
+          eventsList.innerHTML = '<div class="empty">No events yet. Create the first one on the left.</div>';
+          return;
+        }
+
+        eventsList.innerHTML = events.map(function (ev) {
+          const directionsUrl = MaxxEvents.buildDirectionsUrl(ev);
+          const embedUrl = MaxxEvents.buildMapEmbedUrl(ev);
+          const features = Array.isArray(ev.allowed_features) ? ev.allowed_features : [];
+          const place = [ev.venue_name, ev.location].filter(Boolean).join(" · ") || "—";
+
+          return (
+            '<div class="item">' +
+              '<div class="item-title">' + escapeHtml(ev.title) + '</div>' +
+              '<div class="item-row"><span>Date</span><span>' + escapeHtml(formatDate(ev.event_date)) + '</span></div>' +
+              '<div class="item-row"><span>Status</span><span class="pill">' + escapeHtml(ev.status || "draft") + '</span></div>' +
+              '<div class="item-row"><span>Venue</span><span>' + escapeHtml(place) + '</span></div>' +
+              '<div class="item-row"><span>Address</span><span>' + escapeHtml(ev.venue_address || "—") + '</span></div>' +
+              '<div class="item-row"><span>Manager</span><span>' + escapeHtml(ev.event_manager_name || "—") +
+                (ev.event_manager_phone ? " · " + escapeHtml(ev.event_manager_phone) : "") +
+              '</span></div>' +
+              '<div class="item-row"><span>Upload window</span><span>' +
+                escapeHtml(formatDateTime(ev.upload_opens_at)) + " → " + escapeHtml(formatDateTime(ev.upload_closes_at)) +
+              '</span></div>' +
+              (features.length
+                ? ('<div class="tags">' + features.map(function (k) {
+                    return '<span class="tag">' + escapeHtml(featureLabel(k)) + '</span>';
+                  }).join("") + '</div>')
+                : '<div class="item-row"><span>Allowed</span><span>None selected</span></div>') +
+              (embedUrl
+                ? ('<div class="map-wrap"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="' +
+                    escapeHtml(embedUrl) + '"></iframe></div>')
+                : '') +
+              '<div class="actions">' +
+                (directionsUrl
+                  ? ('<a class="link-btn" target="_blank" rel="noopener" href="' + escapeHtml(directionsUrl) + '">Open Directions</a>')
+                  : '') +
+                (ev.maps_url
+                  ? ('<a class="link-btn" target="_blank" rel="noopener" href="' + escapeHtml(ev.maps_url) + '">Maps Link</a>')
+                  : '') +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+      }
+
+      async function loadEvents() {
+        loadingBox.style.display = "block";
+        eventsList.style.display = "none";
+        try {
+          const events = await MaxxEvents.listEvents();
+          renderEvents(events);
+        } catch (err) {
+          loadingBox.style.display = "none";
+          eventsList.style.display = "none";
+          showError(err.message || "Failed to load events.");
+        }
+      }
+
+      logoutBtn.addEventListener("click", async function () {
+        try {
+          await MaxxAuth.signOut();
+          window.location.href = "login.html";
+        } catch (err) {
+          showError(err.message || "Failed to sign out.");
+        }
+      });
+
+      refreshBtn.addEventListener("click", function () {
+        clearMessages();
+        loadEvents();
+      });
+
+      createForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearMessages();
+        createBtn.disabled = true;
+        createBtn.textContent = "Creating…";
+
+        try {
+          const created = await MaxxEvents.createEvent({
+            title: document.getElementById("title").value,
+            eventDate: document.getElementById("eventDate").value || null,
+            status: document.getElementById("status").value,
+            location: document.getElementById("location").value,
+            venueName: document.getElementById("venueName").value,
+            venueAddress: document.getElementById("venueAddress").value,
+            mapsUrl: document.getElementById("mapsUrl").value,
+            eventManagerName: document.getElementById("eventManagerName").value,
+            eventManagerPhone: document.getElementById("eventManagerPhone").value,
+            uploadOpensAt: document.getElementById("uploadOpensAt").value,
+            uploadClosesAt: document.getElementById("uploadClosesAt").value,
+            allowedFeatures: getSelectedFeatures(),
+            notes: document.getElementById("notes").value,
+          }, me);
+
+          createForm.reset();
+          document.getElementById("status").value = "draft";
+          renderAllowedChecks();
+          showSuccess('Event created: "' + created.title + '"');
+          await loadEvents();
+        } catch (err) {
+          showError(err.message || "Failed to create event.");
+        } finally {
+          createBtn.disabled = false;
+          createBtn.textContent = "Create Event";
+        }
+      });
+
+      try {
+        const session = await MaxxAuth.requireAuth("login.html");
+        if (!session) return;
+
+        me = await MaxxAuth.getMe();
+        const canWrite = ["platform_owner", "superadmin", "opsadmin", "manager"].includes(me.role);
+        userMeta.textContent = "Signed in as " + (me.email || "") +
+          " · role " + (me.role || "") +
+          " · org " + (me.organization_name || (me.role === "platform_owner" ? "Global / MAXX default" : "-"));
+
+        renderAllowedChecks();
+
+        if (!canWrite) {
+          createBtn.disabled = true;
+          createBtn.textContent = "Read-only for your role";
+        }
+
+        await loadEvents();
+      } catch (err) {
+        showError(err.message || "Failed to initialize events page.");
+      }
+    })();
+  </script>
+</body>
+</html>
