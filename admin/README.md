@@ -57,9 +57,18 @@ supabase functions deploy admin-create-user
 ```
 3. Open User Management → enter email, password, name, role → **Create User**
 
-After that, you never need Supabase Auth → Add user for day-to-day accounts.
+## GitHub Pages note
 
-## Notes
+`admin/config.js` is gitignored. For Pages deploy, force-add the anon config once:
+
+```bash
+git add -f admin/config.js
+git commit -m "Add Supabase anon config for GitHub Pages"
+git push
+```
+
+Never commit the **service_role** key. Anon key in the browser is expected for Supabase client apps.
+
 
 - `config.js` should not be committed (contains project keys).
 - Login verifies both Auth session and `public.users` profile mapping.
