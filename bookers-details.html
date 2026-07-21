@@ -6,6 +6,7 @@
 <title>Bookers Details — MAXX Events & Planners</title>
 <meta name="description" content="View all quote requests and booker details for MAXX Events">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin/css/admin-nav.css">
 <style>
 :root {
   --black: #0A0A0A;
@@ -29,15 +30,8 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 ::-webkit-scrollbar-track{background:var(--black)}
 ::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px}
 
-/* ── SIMPLE LOGO HEADER ── */
-.logo-header{background:var(--charcoal);border-bottom:1px solid rgba(201,168,76,.2);padding:12px 20px;display:flex;align-items:center;justify-content:center}
-.logo-header a{text-decoration:none;display:flex;align-items:center;gap:10px}
-.logo-text{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.06em;color:var(--white)}
-.logo-text span{color:var(--gold)}
-.logo-sub{font-size:9px;color:rgba(201,168,76,.7);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
-
-/* ── PAGE HEADER ── */
-.page-header{padding:100px 5vw 40px;text-align:center;position:relative}
+/* ── ADMIN NAV HEADER (shared styles in admin/css/admin-nav.css) ── */
+.page-header{padding:40px 5vw 40px;text-align:center;position:relative}
 .page-header-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(201,168,76,.07) 0%,transparent 65%);pointer-events:none}
 .page-eyebrow{font-size:11px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;font-weight:500;margin-bottom:12px;position:relative;z-index:1}
 .page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);letter-spacing:.04em;position:relative;z-index:1;margin-bottom:8px}
@@ -166,7 +160,7 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
   .stats-bar{grid-template-columns:repeat(2,1fr)}
   .controls-bar{flex-direction:column;align-items:stretch}
   .filter-group{justify-content:flex-start}
-  .page-header{padding:90px 5vw 32px}
+  .page-header{padding:32px 5vw 32px}
 }
 
 /* ── ANIMATIONS ── */
@@ -179,15 +173,22 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 </head>
 <body>
 
-<!-- SIMPLE LOGO HEADER -->
-<div class="logo-header">
-  <a href="index.html">
-    <div>
-      <div class="logo-text">MA<span>XX</span> EVENTS</div>
-      <div class="logo-sub">Bookers Details</div>
-    </div>
-  </a>
-</div>
+<!-- ADMIN NAV HEADER -->
+<header class="admin-header">
+  <a class="admin-brand" href="admin/index.html">MA<span>XX</span> ADMIN</a>
+  <div class="admin-nav" id="topNav">
+    <a class="admin-link" href="admin/index.html" data-module="dashboard">Dashboard</a>
+    <a class="admin-link" href="admin/events.html" data-module="events">Events</a>
+    <a class="admin-link" href="admin/operations.html" data-module="operations">Operations</a>
+    <a class="admin-link" href="admin/event-assign.html" data-module="event_assign">Assign Users</a>
+    <a class="admin-link" href="admin/event-feed.html" data-module="event_feed">Event Feed</a>
+    <a class="admin-link" href="bookers-details.html" data-module="leads">Leads</a>
+    <a class="admin-link" href="admin/users.html" data-module="users">Users</a>
+    <a class="admin-link" href="manual-entry.html" data-module="manual_entry">Manual Entry</a>
+    <a class="admin-link" href="booking_form/index.html" data-module="booking_form">Booking Form</a>
+    <button id="logoutBtn" class="admin-btn" type="button">Sign Out</button>
+  </div>
+</header>
 
 <!-- PAGE HEADER -->
 <section class="page-header">
@@ -296,6 +297,7 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="admin/config.js"></script>
 <script src="admin/js/auth.js"></script>
+<script src="admin/js/events.js"></script>
 <script src="js/maxx-leads.js"></script>
 <script>
 // ── CONSTANTS ──
@@ -307,6 +309,7 @@ const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu
 let currentFilter = "all";
 let dbBookers = null; // null = not loaded yet; [] = loaded empty
 let currentUser = null;
+let leadsRealtimeChannel = null;
 
 // ── DATA ACCESS ──
 function getLocalBookers() {
@@ -542,6 +545,54 @@ async function syncFromSheet(manual) {
     }
   } finally {
     isSyncing = false;
+  }
+}
+
+async function convertLeadToEvent(quoteCode) {
+  if (!currentUser || !window.MaxxEvents) {
+    alert('Sign in as superadmin/opsadmin/manager first.');
+    return;
+  }
+
+  const b = getBookers().find(function (x) { return x.quoteCode === quoteCode; });
+  if (!b) {
+    alert('Lead not found: ' + quoteCode);
+    return;
+  }
+
+  const title = (b.personName || b.name || '') + ' — ' + (b.eventType || 'Event');
+  if (!confirm('Create event from this lead?\n\nTitle: ' + title + '\nDate: ' + (b.date || '—') + '\nLocation: ' + (b.location || '—'))) {
+    return;
+  }
+
+  try {
+    const created = await MaxxEvents.createEvent({
+      title: title,
+      eventDate: b.date || null,
+      status: 'confirmed',
+      location: b.location || '',
+      venueName: b.venueNote || '',
+      venueAddress: '',
+      mapsUrl: '',
+      eventManagerName: '',
+      eventManagerPhone: '',
+      uploadOpensAt: '',
+      uploadClosesAt: '',
+      allowedFeatures: [],
+      notes: [
+        'Converted from lead ' + quoteCode,
+        'Client: ' + (b.name || '') + ' · ' + (b.phone || ''),
+        'Budget: ' + (b.budget || '—'),
+        b.notes || '',
+      ].filter(Boolean).join('\n'),
+    }, currentUser);
+
+    // Mark lead as Confirmed
+    await updateBookerStatus(quoteCode, 'Confirmed');
+    closeModal();
+    alert('Event created: "' + created.title + '"\n\nOpen Events page to edit details, add venue address, manager, etc.');
+  } catch (e) {
+    alert('Failed to create event: ' + (e.message || e));
   }
 }
 
@@ -801,9 +852,14 @@ function openModal(code) {
     </div>
   `;
 
+  const convertBtnHtml = currentUser && ['platform_owner','superadmin','opsadmin','manager'].includes(currentUser.role)
+    ? `<button class="btn-export" style="background:rgba(201,168,76,.12);border-color:var(--gold);color:var(--gold);font-weight:600" onclick="convertLeadToEvent('${escapeHtml(b.quoteCode || '')}')">🎊 Convert to Event</button>`
+    : '';
+
   footer.innerHTML = `
     <a href="tel:${escapeHtml(b.phone || '')}" class="btn-call">📞 Call ${escapeHtml(b.name || 'Booker')}</a>
     <a href="https://wa.me/${escapeHtml(stripPhone(b.phone))}" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>
+    ${convertBtnHtml}
   `;
 
   modal.classList.add('open');
@@ -927,11 +983,38 @@ document.addEventListener('keydown', function(e) {
     if (!session) return;
 
     currentUser = await MaxxAuth.getMe();
+
+    if (!MaxxAuth.canAccessModule(currentUser.role, 'leads')) {
+      window.location.href = MaxxAuth.isFullAdmin(currentUser.role) ? 'admin/index.html' : 'admin/event-feed.html';
+      return;
+    }
+
+    MaxxAuth.applyAdminNav(currentUser.role);
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async function () {
+        try {
+          await MaxxAuth.signOut();
+          window.location.href = 'admin/login.html';
+        } catch (err) {
+          alert(err.message || 'Failed to sign out.');
+        }
+      });
+    }
+
     if (banner) {
-      banner.innerHTML = `Signed in as <strong>${escapeHtml(currentUser.email)}</strong> · role <strong>${escapeHtml(currentUser.role)}</strong> · org <strong>${escapeHtml(currentUser.organization_name || 'Global')}</strong> · <a href="admin/index.html">Admin</a>`;
+      banner.innerHTML = `Signed in as <strong>${escapeHtml(currentUser.email)}</strong> · role <strong>${escapeHtml(currentUser.role)}</strong> · org <strong>${escapeHtml(currentUser.organization_name || 'Global')}</strong>`;
     }
 
     await syncFromDb(true);
+
+    // Live updates: auto-refresh when any lead row changes.
+    if (window.MaxxLeads && window.MaxxLeads.subscribeLeads) {
+      leadsRealtimeChannel = MaxxLeads.subscribeLeads(function () {
+        syncFromDb(false);
+      });
+    }
   } catch (e) {
     console.error(e);
     if (banner) {
@@ -953,6 +1036,13 @@ setInterval(function () {
   if (currentUser) syncFromDb(false);
   else syncFromSheet();
 }, 30000);
+
+window.addEventListener('beforeunload', function () {
+  if (window.MaxxLeads && window.MaxxLeads.unsubscribe && leadsRealtimeChannel) {
+    MaxxLeads.unsubscribe(leadsRealtimeChannel);
+    leadsRealtimeChannel = null;
+  }
+});
 </script>
 </body>
 </html>

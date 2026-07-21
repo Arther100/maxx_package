@@ -1,0 +1,70 @@
+/* Shared admin top nav — same look on every screen */
+.header,
+.admin-header {
+  background: #1a1a1a;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.brand,
+.admin-brand {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  color: #f8f4ee;
+}
+
+.brand span,
+.admin-brand span {
+  color: #c9a84c;
+}
+
+.nav,
+.admin-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn,
+.link-btn,
+.admin-link,
+.admin-btn {
+  background: transparent;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  color: #c9a84c;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: "Outfit", sans-serif;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn:hover,
+.link-btn:hover,
+.admin-link:hover,
+.admin-btn:hover {
+  background: rgba(201, 168, 76, 0.08);
+}
+
+/* Current screen highlight */
+.link-btn.nav-active,
+.admin-link.nav-active {
+  background: rgba(201, 168, 76, 0.18);
+  border-color: #c9a84c;
+  color: #e8c97a;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.25);
+}

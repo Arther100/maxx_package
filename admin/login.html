@@ -69,10 +69,15 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
         errorBox.textContent = message;
       }
 
+      function homeForRole(role) {
+        return MaxxAuth.homeForRole(role);
+      }
+
       try {
         const session = await MaxxAuth.getSession();
         if (session) {
-          window.location.href = "index.html";
+          const me = await MaxxAuth.getMe();
+          window.location.href = homeForRole(me.role);
           return;
         }
       } catch (err) {
@@ -87,8 +92,8 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 
         try {
           await MaxxAuth.signIn(emailEl.value.trim(), passwordEl.value);
-          await MaxxAuth.getMe();
-          window.location.href = "index.html";
+          const me = await MaxxAuth.getMe();
+          window.location.href = homeForRole(me.role);
         } catch (err) {
           showError(err.message || "Login failed. Check email/password and profile mapping.");
         } finally {

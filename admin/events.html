@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Events — MAXX Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin-nav.css">
 <style>
 :root {
   --black: #0A0A0A;
@@ -17,12 +18,6 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh}
-.header{background:var(--charcoal);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.brand{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.06em;text-decoration:none;color:var(--white)}
-.brand span{color:var(--gold)}
-.nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.btn,.link-btn{background:transparent;border:1px solid rgba(201,168,76,.35);color:var(--gold);border-radius:8px;padding:9px 14px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;text-decoration:none;display:inline-block}
-.btn:hover,.link-btn:hover{background:rgba(201,168,76,.08)}
 .btn-primary{background:var(--gold);color:var(--black);border:none;font-weight:700}
 .btn-primary:hover{background:var(--gold-light)}
 .btn-primary:disabled{opacity:.6;cursor:not-allowed}
@@ -63,15 +58,24 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .empty{color:var(--muted);font-size:13px;padding:18px 4px}
 .loading{color:var(--muted);font-size:13px}
-.hint{font-size:11px;color:var(--muted);margin-top:-4px;margin-bottom:10px;line-height:1.5}
+.btn-danger{border-color:rgba(255,80,80,.45);color:#ff8f8f}
+.btn-danger:hover{background:rgba(255,80,80,.1)}
+.btn-sm{padding:7px 10px;font-size:11px}
 </style>
 </head>
 <body>
   <header class="header">
     <a class="brand" href="index.html">MA<span>XX</span> ADMIN</a>
-    <div class="nav">
-      <a class="link-btn" href="index.html">Dashboard</a>
-      <a class="link-btn" href="../bookers-details.html">Leads</a>
+    <div class="nav" id="topNav">
+      <a class="link-btn" href="index.html" data-module="dashboard">Dashboard</a>
+      <a class="link-btn" href="events.html" data-module="events">Events</a>
+      <a class="link-btn" href="operations.html" data-module="operations">Operations</a>
+      <a class="link-btn" href="event-assign.html" data-module="event_assign">Assign Users</a>
+      <a class="link-btn" href="event-feed.html" data-module="event_feed">Event Feed</a>
+      <a class="link-btn" href="../bookers-details.html" data-module="leads">Leads</a>
+      <a class="link-btn" href="users.html" data-module="users">Users</a>
+      <a class="link-btn" href="../manual-entry.html" data-module="manual_entry">Manual Entry</a>
+      <a class="link-btn" href="../booking_form/index.html" data-module="booking_form">Booking Form</a>
       <button id="logoutBtn" class="btn" type="button">Sign Out</button>
     </div>
   </header>
@@ -87,8 +91,9 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 
     <div class="grid">
       <section class="panel">
-        <h2>Create Event</h2>
+        <h2 id="formTitle">Create Event</h2>
         <form id="createForm">
+          <input type="hidden" id="editingEventId" value="">
           <div class="field">
             <label for="title">Title *</label>
             <input id="title" type="text" required placeholder="e.g. Sharma Wedding Reception" maxlength="160">
@@ -128,17 +133,7 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
           </div>
           <p class="hint">If address is filled, list cards show map preview + Directions button (opens Google Maps).</p>
 
-          <div class="section-label">Event Manager Settings</div>
-          <div class="two-col">
-            <div class="field">
-              <label for="eventManagerName">Event Manager Name</label>
-              <input id="eventManagerName" type="text" placeholder="Manager full name">
-            </div>
-            <div class="field">
-              <label for="eventManagerPhone">Manager Phone</label>
-              <input id="eventManagerPhone" type="tel" placeholder="+91 ...">
-            </div>
-          </div>
+          <div class="section-label">Upload Window</div>
           <div class="two-col">
             <div class="field">
               <label for="uploadOpensAt">Upload Opens At</label>
@@ -149,6 +144,7 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
               <input id="uploadClosesAt" type="datetime-local">
             </div>
           </div>
+          <p class="hint">Leave empty to allow uploads anytime. Assign managers via <strong>Assign Users</strong> (with operation).</p>
 
           <div class="section-label">Allowed Features</div>
           <div id="allowedFeatures" class="checks"></div>
@@ -158,7 +154,10 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
             <textarea id="notes" placeholder="Special instructions for this event"></textarea>
           </div>
 
-          <button id="createBtn" class="btn btn-primary" type="submit" style="width:100%;padding:12px;margin-top:4px">Create Event</button>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button id="createBtn" class="btn btn-primary" type="submit" style="flex:1;padding:12px">Create Event</button>
+            <button id="cancelEditBtn" class="btn" type="button" style="display:none;padding:12px">Cancel</button>
+          </div>
         </form>
       </section>
 
@@ -191,7 +190,15 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
       const allowedWrap = document.getElementById("allowedFeatures");
       const migrationHint = document.getElementById("migrationHint");
 
+      const formTitle = document.getElementById("formTitle");
+      const editingEventId = document.getElementById("editingEventId");
+      const cancelEditBtn = document.getElementById("cancelEditBtn");
+
       let me = null;
+      let canWrite = false;
+      let canDelete = false;
+      let eventsCache = [];
+      let eventsRealtimeChannel = null;
 
       function showError(message) {
         successBox.style.display = "none";
@@ -246,11 +253,13 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
         return found ? found.label : key;
       }
 
-      function renderAllowedChecks() {
+      function renderAllowedChecks(selectedKeys) {
+        const selected = Array.isArray(selectedKeys) ? selectedKeys : [];
         allowedWrap.innerHTML = MaxxEvents.ALLOWED_FEATURE_OPTIONS.map(function (f) {
+          const checked = selected.indexOf(f.key) !== -1 ? " checked" : "";
           return (
             '<label class="check">' +
-              '<input type="checkbox" name="allowedFeature" value="' + escapeHtml(f.key) + '">' +
+              '<input type="checkbox" name="allowedFeature" value="' + escapeHtml(f.key) + '"' + checked + '>' +
               '<span>' + escapeHtml(f.label) + '</span>' +
             '</label>'
           );
@@ -262,9 +271,83 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
           .map(function (el) { return el.value; });
       }
 
+      function readFormInput() {
+        return {
+          title: document.getElementById("title").value,
+          eventDate: document.getElementById("eventDate").value || null,
+          status: document.getElementById("status").value,
+          location: document.getElementById("location").value,
+          venueName: document.getElementById("venueName").value,
+          venueAddress: document.getElementById("venueAddress").value,
+          mapsUrl: document.getElementById("mapsUrl").value,
+          uploadOpensAt: document.getElementById("uploadOpensAt").value,
+          uploadClosesAt: document.getElementById("uploadClosesAt").value,
+          allowedFeatures: getSelectedFeatures(),
+          notes: document.getElementById("notes").value,
+        };
+      }
+
+      function resetFormMode() {
+        editingEventId.value = "";
+        formTitle.textContent = "Create Event";
+        createBtn.textContent = canWrite ? "Create Event" : "Read-only for your role";
+        cancelEditBtn.style.display = "none";
+        createForm.reset();
+        document.getElementById("status").value = "draft";
+        renderAllowedChecks([]);
+      }
+
+      function startEdit(eventId) {
+        const ev = eventsCache.find(function (row) { return row.id === eventId; });
+        if (!ev) {
+          showError("Event not found in current list.");
+          return;
+        }
+
+        clearMessages();
+        editingEventId.value = ev.id;
+        formTitle.textContent = "Edit Event";
+        createBtn.textContent = "Save Changes";
+        cancelEditBtn.style.display = "inline-block";
+
+        document.getElementById("title").value = ev.title || "";
+        document.getElementById("eventDate").value = ev.event_date || "";
+        document.getElementById("status").value = ev.status || "draft";
+        document.getElementById("location").value = ev.location || "";
+        document.getElementById("venueName").value = ev.venue_name || "";
+        document.getElementById("venueAddress").value = ev.venue_address || "";
+        document.getElementById("mapsUrl").value = ev.maps_url || "";
+        document.getElementById("uploadOpensAt").value = MaxxEvents.toDateTimeLocalValue(ev.upload_opens_at);
+        document.getElementById("uploadClosesAt").value = MaxxEvents.toDateTimeLocalValue(ev.upload_closes_at);
+        document.getElementById("notes").value = ev.notes || "";
+        renderAllowedChecks(Array.isArray(ev.allowed_features) ? ev.allowed_features : []);
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      async function handleDelete(eventId, title) {
+        if (!canDelete) {
+          showError("Your role cannot delete events (needs superadmin/opsadmin/platform_owner).");
+          return;
+        }
+        const ok = confirm('Delete event "' + (title || "Untitled") + '"?\nThis cannot be undone.');
+        if (!ok) return;
+
+        clearMessages();
+        try {
+          await MaxxEvents.deleteEvent(eventId);
+          if (editingEventId.value === eventId) resetFormMode();
+          showSuccess('Event deleted: "' + (title || "Untitled") + '"');
+          await loadEvents();
+        } catch (err) {
+          showError(err.message || "Failed to delete event.");
+        }
+      }
+
       function renderEvents(events) {
         loadingBox.style.display = "none";
         eventsList.style.display = "flex";
+        eventsCache = events || [];
 
         if (!events.length) {
           eventsList.innerHTML = '<div class="empty">No events yet. Create the first one on the left.</div>';
@@ -278,15 +361,13 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
           const place = [ev.venue_name, ev.location].filter(Boolean).join(" · ") || "—";
 
           return (
-            '<div class="item">' +
+            '<div class="item" data-event-id="' + escapeHtml(ev.id) + '">' +
               '<div class="item-title">' + escapeHtml(ev.title) + '</div>' +
               '<div class="item-row"><span>Date</span><span>' + escapeHtml(formatDate(ev.event_date)) + '</span></div>' +
               '<div class="item-row"><span>Status</span><span class="pill">' + escapeHtml(ev.status || "draft") + '</span></div>' +
               '<div class="item-row"><span>Venue</span><span>' + escapeHtml(place) + '</span></div>' +
               '<div class="item-row"><span>Address</span><span>' + escapeHtml(ev.venue_address || "—") + '</span></div>' +
-              '<div class="item-row"><span>Manager</span><span>' + escapeHtml(ev.event_manager_name || "—") +
-                (ev.event_manager_phone ? " · " + escapeHtml(ev.event_manager_phone) : "") +
-              '</span></div>' +
+              '<div class="item-row"><span>Team</span><span>Use Assign Users (with operation)</span></div>' +
               '<div class="item-row"><span>Upload window</span><span>' +
                 escapeHtml(formatDateTime(ev.upload_opens_at)) + " → " + escapeHtml(formatDateTime(ev.upload_closes_at)) +
               '</span></div>' +
@@ -300,11 +381,19 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
                     escapeHtml(embedUrl) + '"></iframe></div>')
                 : '') +
               '<div class="actions">' +
+                (canWrite
+                  ? ('<button type="button" class="btn btn-sm" data-action="edit" data-id="' + escapeHtml(ev.id) + '">Edit</button>')
+                  : '') +
+                (canDelete
+                  ? ('<button type="button" class="btn btn-sm btn-danger" data-action="delete" data-id="' + escapeHtml(ev.id) + '" data-title="' + escapeHtml(ev.title || "") + '">Delete</button>')
+                  : '') +
+                '<a class="link-btn btn-sm" href="event-assign.html?event=' + encodeURIComponent(ev.id) + '">Assign Users</a>' +
+                '<a class="link-btn btn-sm" href="event-feed.html?event=' + encodeURIComponent(ev.id) + '">View Feed</a>' +
                 (directionsUrl
-                  ? ('<a class="link-btn" target="_blank" rel="noopener" href="' + escapeHtml(directionsUrl) + '">Open Directions</a>')
+                  ? ('<a class="link-btn btn-sm" target="_blank" rel="noopener" href="' + escapeHtml(directionsUrl) + '">Open Directions</a>')
                   : '') +
                 (ev.maps_url
-                  ? ('<a class="link-btn" target="_blank" rel="noopener" href="' + escapeHtml(ev.maps_url) + '">Maps Link</a>')
+                  ? ('<a class="link-btn btn-sm" target="_blank" rel="noopener" href="' + escapeHtml(ev.maps_url) + '">Maps Link</a>')
                   : '') +
               '</div>' +
             '</div>'
@@ -339,39 +428,53 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
         loadEvents();
       });
 
+      cancelEditBtn.addEventListener("click", function () {
+        clearMessages();
+        resetFormMode();
+      });
+
+      eventsList.addEventListener("click", function (e) {
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        const action = btn.getAttribute("data-action");
+        const id = btn.getAttribute("data-id");
+        if (action === "edit") startEdit(id);
+        if (action === "delete") handleDelete(id, btn.getAttribute("data-title") || "");
+      });
+
       createForm.addEventListener("submit", async function (event) {
         event.preventDefault();
         clearMessages();
+        if (!canWrite) {
+          showError("Your role cannot create/edit events.");
+          return;
+        }
+
+        const editingId = editingEventId.value;
+        const isEdit = !!editingId;
         createBtn.disabled = true;
-        createBtn.textContent = "Creating…";
+        createBtn.textContent = isEdit ? "Saving…" : "Creating…";
 
         try {
-          const created = await MaxxEvents.createEvent({
-            title: document.getElementById("title").value,
-            eventDate: document.getElementById("eventDate").value || null,
-            status: document.getElementById("status").value,
-            location: document.getElementById("location").value,
-            venueName: document.getElementById("venueName").value,
-            venueAddress: document.getElementById("venueAddress").value,
-            mapsUrl: document.getElementById("mapsUrl").value,
-            eventManagerName: document.getElementById("eventManagerName").value,
-            eventManagerPhone: document.getElementById("eventManagerPhone").value,
-            uploadOpensAt: document.getElementById("uploadOpensAt").value,
-            uploadClosesAt: document.getElementById("uploadClosesAt").value,
-            allowedFeatures: getSelectedFeatures(),
-            notes: document.getElementById("notes").value,
-          }, me);
-
-          createForm.reset();
-          document.getElementById("status").value = "draft";
-          renderAllowedChecks();
-          showSuccess('Event created: "' + created.title + '"');
+          const input = readFormInput();
+          if (isEdit) {
+            const updated = await MaxxEvents.updateEvent(editingId, input);
+            resetFormMode();
+            showSuccess('Event updated: "' + updated.title + '"');
+          } else {
+            const created = await MaxxEvents.createEvent(input, me);
+            resetFormMode();
+            showSuccess('Event created: "' + created.title + '"');
+          }
           await loadEvents();
         } catch (err) {
-          showError(err.message || "Failed to create event.");
+          showError(err.message || (isEdit ? "Failed to update event." : "Failed to create event."));
+          createBtn.textContent = isEdit ? "Save Changes" : "Create Event";
         } finally {
-          createBtn.disabled = false;
-          createBtn.textContent = "Create Event";
+          createBtn.disabled = !canWrite;
+          if (!editingEventId.value) {
+            createBtn.textContent = canWrite ? "Create Event" : "Read-only for your role";
+          }
         }
       });
 
@@ -380,12 +483,21 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
         if (!session) return;
 
         me = await MaxxAuth.getMe();
-        const canWrite = ["platform_owner", "superadmin", "opsadmin", "manager"].includes(me.role);
+        canWrite = ["platform_owner", "superadmin", "opsadmin"].includes(me.role);
+        canDelete = ["platform_owner", "superadmin", "opsadmin"].includes(me.role);
+
+        if (!MaxxAuth.canAccessModule(me.role, "events")) {
+          window.location.href = MaxxAuth.homeForRole(me.role);
+          return;
+        }
+
         userMeta.textContent = "Signed in as " + (me.email || "") +
           " · role " + (me.role || "") +
           " · org " + (me.organization_name || (me.role === "platform_owner" ? "Global / MAXX default" : "-"));
 
-        renderAllowedChecks();
+        MaxxAuth.applyAdminNav(me.role);
+
+        renderAllowedChecks([]);
 
         if (!canWrite) {
           createBtn.disabled = true;
@@ -393,9 +505,23 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
         }
 
         await loadEvents();
+
+        // Live updates: refresh list when any event changes.
+        if (window.MaxxEvents && window.MaxxEvents.subscribeEvents) {
+          eventsRealtimeChannel = MaxxEvents.subscribeEvents(function () {
+            loadEvents();
+          });
+        }
       } catch (err) {
         showError(err.message || "Failed to initialize events page.");
       }
+
+      window.addEventListener("beforeunload", function () {
+        if (window.MaxxEvents && window.MaxxEvents.unsubscribe && eventsRealtimeChannel) {
+          MaxxEvents.unsubscribe(eventsRealtimeChannel);
+          eventsRealtimeChannel = null;
+        }
+      });
     })();
   </script>
 </body>

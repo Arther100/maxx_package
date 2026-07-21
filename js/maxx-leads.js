@@ -104,11 +104,34 @@
     return mapLeadRow(data);
   }
 
+  function subscribeLeads(onChange) {
+    const client = getClient();
+    const channel = client
+      .channel("maxx-leads-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leads" },
+        function (payload) {
+          if (typeof onChange === "function") onChange(payload);
+        }
+      )
+      .subscribe();
+    return channel;
+  }
+
+  function unsubscribe(channel) {
+    if (!channel) return;
+    const client = getClient();
+    client.removeChannel(channel);
+  }
+
   window.MaxxLeads = {
     getClient,
     createPublicLead,
     listLeads,
     updateLeadStatus,
+    subscribeLeads,
+    unsubscribe,
     mapLeadRow,
   };
 })();

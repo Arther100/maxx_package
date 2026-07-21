@@ -1,0 +1,5 @@
+# Minimal Supabase config for Edge Functions in this repo.
+# Link project once: supabase link --project-ref YOUR_PROJECT_REF
+
+[functions.admin-create-user]
+verify_jwt = true

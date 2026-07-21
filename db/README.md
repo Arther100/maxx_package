@@ -8,6 +8,12 @@ This project now includes an additive migration at:
 - `db/migrations/004_get_me_rpc.sql`
 - `db/migrations/005_leads_booking_pipeline.sql`
 - `db/migrations/006_events_details_and_settings.sql`
+- `db/migrations/007_user_management.sql`
+- `db/migrations/008_event_members_uploads_and_client_scope.sql`
+- `db/migrations/009_manager_assigned_events_only.sql`
+- `db/migrations/010_fix_manager_upload_rls.sql`
+- `db/migrations/011_operations_and_event_member_ops.sql`
+- `db/migrations/012_upload_operation_scope.sql`
 
 It sets up:
 
@@ -36,6 +42,12 @@ It sets up:
 5. Run `004_get_me_rpc.sql` (profile RPC used by admin frontend)
 6. Run `005_leads_booking_pipeline.sql` (booking form → DB + leads dashboard)
 7. Run `006_events_details_and_settings.sql` (venue/maps/manager/upload/allowed features)
+8. Run `007_user_management.sql` (link Auth users + assign roles from admin UI)
+9. Run `008_event_members_uploads_and_client_scope.sql` (event members + uploads + client event-only feed scope)
+10. Run `009_manager_assigned_events_only.sql` (managers see only assigned events, same as clients)
+11. Run `010_fix_manager_upload_rls.sql` (assigned managers can post; upload window defaults open)
+12. Run `011_operations_and_event_member_ops.sql` (operations CRUD + operation on event assignment)
+13. Run `012_upload_operation_scope.sql` (managers see only their operation’s uploads per event)
 
 Migration `002` rebuilds policies to use authenticated user context.
 Migration `003` is required if verification shows `id_aligned = false`.
@@ -43,6 +55,12 @@ Run `003` in Supabase SQL Editor (it uses a `SECURITY DEFINER` function to bypas
 Migration `004` adds `get_me()` for frontend profile bootstrap.
 Migration `005` adds `leads` table, org-scoped RLS, and `create_public_lead()` for the public booking form.
 Migration `006` extends `events` with location, venue, maps link, manager settings, upload window, and allowed features.
+Migration `007` adds `admin_link_org_user` / `admin_update_org_user` RPCs for User Management.
+Migration `008` adds `event_members`, `event_uploads`, client event-scoped access, and upload feed policies.
+Migration `009` restricts managers to assigned events only (admins still see all org events).
+Migration `010` fixes manager upload RLS / upload-window default so assigned managers can post.
+Migration `011` adds `operations` (Decor/Food/Photography/…) and `event_members.operation_id`.
+Migration `012` scopes `event_uploads` by operation so managers only see their own op feed.
 
 ## Verification queries
 

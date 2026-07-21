@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Users — MAXX Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin-nav.css">
+<style>
+:root {
+  --black: #0A0A0A;
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --white: #F8F4EE;
+  --charcoal: #1A1A1A;
+  --mid: #2A2A2A;
+  --muted: #666;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh}
+.btn-primary{background:var(--gold);color:var(--black);border:none;font-weight:700}
+.btn-primary:hover{background:var(--gold-light)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.btn-danger{border-color:rgba(255,80,80,.45);color:#ff8f8f}
+.btn-danger:hover{background:rgba(255,80,80,.1)}
+.btn-sm{padding:7px 10px;font-size:11px}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 48px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:.04em;margin-bottom:6px}
+.title span{color:var(--gold)}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.6}
+.steps{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:12px 14px;font-size:12px;color:rgba(248,244,238,.9);line-height:1.7;margin-bottom:18px}
+.steps strong{color:var(--gold)}
+.grid{display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;padding:16px}
+.panel h2{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.field input,.field select{width:100%;background:var(--black);border:1px solid var(--mid);border-radius:8px;padding:11px 12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none}
+.field input:focus,.field select:focus{border-color:rgba(201,168,76,.45)}
+.meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+.error{display:none;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.35);color:#ff8f8f;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.success{display:none;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.35);color:#7dffb0;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{border:1px solid var(--mid);border-radius:10px;padding:12px 14px;background:rgba(0,0,0,.25)}
+.item-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.item-sub{font-size:12px;color:var(--muted);margin-bottom:8px}
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(201,168,76,.12);color:var(--gold)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.empty{color:var(--muted);font-size:13px;padding:18px 4px}
+.loading{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="index.html">MA<span>XX</span> ADMIN</a>
+    <div class="nav" id="topNav">
+      <a class="link-btn" href="index.html" data-module="dashboard">Dashboard</a>
+      <a class="link-btn" href="events.html" data-module="events">Events</a>
+      <a class="link-btn" href="operations.html" data-module="operations">Operations</a>
+      <a class="link-btn" href="event-assign.html" data-module="event_assign">Assign Users</a>
+      <a class="link-btn" href="event-feed.html" data-module="event_feed">Event Feed</a>
+      <a class="link-btn" href="../bookers-details.html" data-module="leads">Leads</a>
+      <a class="link-btn" href="users.html" data-module="users">Users</a>
+      <a class="link-btn" href="../manual-entry.html" data-module="manual_entry">Manual Entry</a>
+      <a class="link-btn" href="../booking_form/index.html" data-module="booking_form">Booking Form</a>
+      <button id="logoutBtn" class="btn" type="button">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="title">User <span>Management</span></h1>
+    <p class="subtitle">Create login accounts and assign roles from this page (RBAC).</p>
+    <p class="meta" id="userMeta">Loading…</p>
+
+    <div class="steps">
+      <strong>How to add a user</strong><br>
+      Enter email, password, name, and role → click <strong>Create User</strong>.<br>
+      They can sign in immediately at <code>admin/login.html</code>.<br>
+      Requires Edge Function <code>admin-create-user</code> deployed once (see admin README).
+    </div>
+
+    <div id="errorBox" class="error"></div>
+    <div id="successBox" class="success"></div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2 id="formTitle">Create User</h2>
+        <form id="userForm">
+          <input type="hidden" id="editingUserId" value="">
+          <div class="field">
+            <label for="email">Email *</label>
+            <input id="email" type="email" required placeholder="manager@maxxevents.local">
+          </div>
+          <div class="field" id="passwordField">
+            <label for="password">Password *</label>
+            <input id="password" type="password" minlength="6" placeholder="Min 6 characters" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label for="fullName">Full Name</label>
+            <input id="fullName" type="text" placeholder="Display name">
+          </div>
+          <div class="field">
+            <label for="role">Role *</label>
+            <select id="role" required></select>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="saveBtn" class="btn btn-primary" type="submit" style="flex:1;padding:12px">Create User</button>
+            <button id="cancelEditBtn" class="btn" type="button" style="display:none;padding:12px">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px">
+          <h2 style="margin:0">Org Users</h2>
+          <button id="refreshBtn" class="btn" type="button">Refresh</button>
+        </div>
+        <div id="loadingBox" class="loading">Loading users…</div>
+        <div id="usersList" class="list" style="display:none"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/users.js"></script>
+  <script>
+    (async function () {
+      const errorBox = document.getElementById("errorBox");
+      const successBox = document.getElementById("successBox");
+      const loadingBox = document.getElementById("loadingBox");
+      const usersList = document.getElementById("usersList");
+      const userMeta = document.getElementById("userMeta");
+      const userForm = document.getElementById("userForm");
+      const saveBtn = document.getElementById("saveBtn");
+      const cancelEditBtn = document.getElementById("cancelEditBtn");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const formTitle = document.getElementById("formTitle");
+      const editingUserId = document.getElementById("editingUserId");
+      const roleSelect = document.getElementById("role");
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+      const passwordField = document.getElementById("passwordField");
+
+      let me = null;
+      let canManage = false;
+      let canDelete = false;
+      let usersCache = [];
+
+      function showError(message) {
+        successBox.style.display = "none";
+        errorBox.style.display = "block";
+        errorBox.textContent = message;
+      }
+
+      function showSuccess(message) {
+        errorBox.style.display = "none";
+        successBox.style.display = "block";
+        successBox.textContent = message;
+      }
+
+      function clearMessages() {
+        errorBox.style.display = "none";
+        successBox.style.display = "none";
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str == null ? "" : String(str);
+        return div.innerHTML;
+      }
+
+      function fillRoleOptions(selected) {
+        const roles = MaxxUsers.assignableRolesFor(me.role);
+        roleSelect.innerHTML = roles.map(function (r) {
+          const sel = r.value === selected ? " selected" : "";
+          return '<option value="' + escapeHtml(r.value) + '"' + sel + ">" + escapeHtml(r.label) + "</option>";
+        }).join("");
+      }
+
+      function applyRoleNav() {
+        MaxxAuth.applyAdminNav(me.role);
+      }
+
+      function resetForm() {
+        editingUserId.value = "";
+        formTitle.textContent = "Create User";
+        saveBtn.textContent = "Create User";
+        cancelEditBtn.style.display = "none";
+        emailInput.disabled = false;
+        passwordField.style.display = "block";
+        passwordInput.required = true;
+        passwordInput.value = "";
+        userForm.reset();
+        fillRoleOptions("manager");
+      }
+
+      function startEdit(userId) {
+        const row = usersCache.find(function (u) { return u.id === userId; });
+        if (!row) return;
+        clearMessages();
+        editingUserId.value = row.id;
+        formTitle.textContent = "Edit User";
+        saveBtn.textContent = "Save Changes";
+        cancelEditBtn.style.display = "inline-block";
+        emailInput.value = row.email || "";
+        emailInput.disabled = true;
+        passwordField.style.display = "none";
+        passwordInput.required = false;
+        passwordInput.value = "";
+        document.getElementById("fullName").value = row.full_name || "";
+        fillRoleOptions(row.role || "manager");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      async function handleDelete(userId, email) {
+        if (!canDelete) {
+          showError("Only superadmin/platform_owner can delete user profiles.");
+          return;
+        }
+        if (me && me.id === userId) {
+          showError("You cannot delete your own profile while signed in.");
+          return;
+        }
+        if (!confirm('Delete profile for "' + email + '"?\nAuth login account is NOT deleted in Supabase Auth.')) return;
+
+        try {
+          await MaxxUsers.deleteUser(userId);
+          if (editingUserId.value === userId) resetForm();
+          showSuccess("Profile deleted for " + email);
+          await loadUsers();
+        } catch (err) {
+          showError(err.message || "Failed to delete user.");
+        }
+      }
+
+      function renderUsers(users) {
+        loadingBox.style.display = "none";
+        usersList.style.display = "flex";
+        usersCache = users || [];
+
+        if (!users.length) {
+          usersList.innerHTML = '<div class="empty">No users found for your org scope.</div>';
+          return;
+        }
+
+        usersList.innerHTML = users.map(function (u) {
+          return (
+            '<div class="item">' +
+              '<div class="item-title">' + escapeHtml(u.full_name || u.email || "User") + '</div>' +
+              '<div class="item-sub">' + escapeHtml(u.email || "") + '</div>' +
+              '<span class="pill">' + escapeHtml(u.role || "") + '</span>' +
+              '<div class="actions">' +
+                (canManage
+                  ? '<button type="button" class="btn btn-sm" data-action="edit" data-id="' + escapeHtml(u.id) + '">Edit</button>'
+                  : '') +
+                (canDelete && u.id !== (me && me.id)
+                  ? '<button type="button" class="btn btn-sm btn-danger" data-action="delete" data-id="' + escapeHtml(u.id) + '" data-email="' + escapeHtml(u.email || "") + '">Delete</button>'
+                  : '') +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+      }
+
+      async function loadUsers() {
+        loadingBox.style.display = "block";
+        usersList.style.display = "none";
+        try {
+          const users = await MaxxUsers.listUsers();
+          renderUsers(users);
+        } catch (err) {
+          loadingBox.style.display = "none";
+          showError(err.message || "Failed to load users.");
+        }
+      }
+
+      logoutBtn.addEventListener("click", async function () {
+        try {
+          await MaxxAuth.signOut();
+          window.location.href = "login.html";
+        } catch (err) {
+          showError(err.message || "Failed to sign out.");
+        }
+      });
+
+      refreshBtn.addEventListener("click", function () {
+        clearMessages();
+        loadUsers();
+      });
+
+      cancelEditBtn.addEventListener("click", function () {
+        clearMessages();
+        resetForm();
+      });
+
+      usersList.addEventListener("click", function (e) {
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        const action = btn.getAttribute("data-action");
+        const id = btn.getAttribute("data-id");
+        if (action === "edit") startEdit(id);
+        if (action === "delete") handleDelete(id, btn.getAttribute("data-email") || "");
+      });
+
+      userForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearMessages();
+        if (!canManage) {
+          showError("Your role cannot manage users.");
+          return;
+        }
+
+        const isEdit = !!editingUserId.value;
+        saveBtn.disabled = true;
+        saveBtn.textContent = isEdit ? "Saving…" : "Creating…";
+
+        try {
+          if (isEdit) {
+            const updated = await MaxxUsers.updateUser({
+              userId: editingUserId.value,
+              fullName: document.getElementById("fullName").value,
+              role: roleSelect.value,
+            });
+            resetForm();
+            showSuccess("Updated " + (updated.email || "user"));
+          } else {
+            const created = await MaxxUsers.createUser({
+              email: emailInput.value.trim(),
+              password: passwordInput.value,
+              fullName: document.getElementById("fullName").value,
+              role: roleSelect.value,
+            });
+            resetForm();
+            showSuccess("Created user " + (created.email || emailInput.value) + " — they can log in now.");
+          }
+          await loadUsers();
+        } catch (err) {
+          var msg = err.message || "Failed to save user.";
+          if (/Failed to send a request to the Edge Function|FunctionsFetchError|404|not found/i.test(msg)) {
+            msg = "Edge Function admin-create-user is not deployed yet. Deploy it once (see admin README), then try again.";
+          }
+          showError(msg);
+        } finally {
+          saveBtn.disabled = false;
+          if (!editingUserId.value) saveBtn.textContent = "Create User";
+          else saveBtn.textContent = "Save Changes";
+        }
+      });
+
+      try {
+        const session = await MaxxAuth.requireAuth("login.html");
+        if (!session) return;
+
+        me = await MaxxAuth.getMe();
+        canManage = MaxxUsers.canManageUsers(me.role);
+        canDelete = MaxxUsers.canDeleteUsers(me.role);
+
+        if (!MaxxAuth.canAccessModule(me.role, "users")) {
+          showError("Your role cannot access User Management.");
+          setTimeout(function () { window.location.href = MaxxAuth.homeForRole(me.role); }, 1200);
+          return;
+        }
+
+        userMeta.textContent = "Signed in as " + (me.email || "") +
+          " · role " + (me.role || "") +
+          " · org " + (me.organization_name || (me.role === "platform_owner" ? "Global" : "-"));
+
+        applyRoleNav();
+        fillRoleOptions("manager");
+
+        if (!canManage) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Read-only";
+        }
+
+        await loadUsers();
+      } catch (err) {
+        showError(err.message || "Failed to initialize users page.");
+      }
+    })();
+  </script>
+</body>
+</html>

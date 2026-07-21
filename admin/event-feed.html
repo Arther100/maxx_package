@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Feed — MAXX Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin-nav.css">
+<style>
+:root{--black:#0A0A0A;--gold:#C9A84C;--gold-light:#E8C97A;--white:#F8F4EE;--charcoal:#1A1A1A;--mid:#2A2A2A;--muted:#666}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh}
+.btn-primary{background:var(--gold);color:var(--black);border:none;font-weight:700}
+.btn-primary:hover{background:var(--gold-light)}
+.btn-sm{padding:6px 10px;font-size:11px}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 48px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:.04em;margin-bottom:6px}
+.title span{color:var(--gold)}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
+.meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+.grid{display:grid;grid-template-columns:280px 1fr;gap:16px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;padding:16px}
+.panel h2{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--black);border:1px solid var(--mid);border-radius:8px;padding:11px 12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none}
+.field textarea{min-height:70px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(201,168,76,.45)}
+.error{display:none;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.35);color:#ff8f8f;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.success{display:none;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.35);color:#7dffb0;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.muted{color:var(--muted);font-size:12px}
+.list{display:flex;flex-direction:column;gap:10px}
+.event-btn{text-align:left;width:100%;background:rgba(0,0,0,.25);border:1px solid var(--mid);border-radius:10px;padding:12px 14px;color:var(--white);cursor:pointer;font-family:'Outfit',sans-serif}
+.event-btn:hover{border-color:rgba(201,168,76,.45)}
+.event-btn.active{border-color:var(--gold);background:rgba(201,168,76,.1)}
+.event-btn .t{font-size:14px;font-weight:600;margin-bottom:4px}
+.event-btn .s{font-size:12px;color:var(--muted)}
+.item{border:1px solid var(--mid);border-radius:10px;padding:12px 14px;background:rgba(0,0,0,.25)}
+.item-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.item-sub{font-size:12px;color:var(--muted);margin-bottom:6px}
+.op-line{font-size:12px;color:var(--gold);margin:4px 0 8px;font-weight:500}
+.tag{display:inline-block;font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid rgba(201,168,76,.3);color:rgba(248,244,238,.85);margin-right:6px}
+.tag-op{border-color:rgba(201,168,76,.55);background:rgba(201,168,76,.12);color:var(--gold);font-weight:600}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.hide{display:none !important}
+</style>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="index.html">MA<span>XX</span> ADMIN</a>
+    <div class="nav" id="topNav">
+      <a class="link-btn" href="index.html" data-module="dashboard">Dashboard</a>
+      <a class="link-btn" href="events.html" data-module="events">Events</a>
+      <a class="link-btn" href="operations.html" data-module="operations">Operations</a>
+      <a class="link-btn" href="event-assign.html" data-module="event_assign">Assign Users</a>
+      <a class="link-btn" href="event-feed.html" data-module="event_feed">Event Feed</a>
+      <a class="link-btn" href="../bookers-details.html" data-module="leads">Leads</a>
+      <a class="link-btn" href="users.html" data-module="users">Users</a>
+      <a class="link-btn" href="../manual-entry.html" data-module="manual_entry">Manual Entry</a>
+      <a class="link-btn" href="../booking_form/index.html" data-module="booking_form">Booking Form</a>
+      <button id="logoutBtn" class="btn" type="button">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="title">Event <span>Feed</span></h1>
+    <p class="subtitle" id="pageSubtitle">Click an event to see one combined feed from all managers. Managers post here on their assigned events.</p>
+    <p class="meta" id="userMeta">Loading…</p>
+
+    <div id="errorBox" class="error"></div>
+    <div id="successBox" class="success"></div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Events</h2>
+        <div id="eventsList" class="list"></div>
+      </section>
+
+      <div>
+        <section class="panel" id="feedPanel">
+          <div class="row" style="margin-bottom:10px">
+            <h2 style="margin:0" id="feedTitle">Select an event</h2>
+            <button id="refreshBtn" class="btn" type="button">Refresh</button>
+          </div>
+          <p class="muted" id="feedHint" style="margin-bottom:12px">SuperAdmin sees all ops. Managers see only their operation’s uploads.</p>
+          <div id="uploadsList" class="list"></div>
+        </section>
+
+        <section class="panel hide" id="postPanel" style="margin-top:16px">
+          <h2>Post Update</h2>
+          <p class="muted" id="postHint" style="margin-bottom:10px"></p>
+          <div id="uploadFormWrap">
+            <div class="field">
+              <label for="uploadType">Upload Type</label>
+              <select id="uploadType">
+                <option value="photo">Photo</option>
+                <option value="video">Video</option>
+                <option value="document">Document</option>
+                <option value="note">Note only</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="uploadFile">File (optional for note)</label>
+              <input id="uploadFile" type="file">
+            </div>
+            <div class="field">
+              <label for="uploadCaption">Caption</label>
+              <textarea id="uploadCaption" placeholder="Update for this event feed"></textarea>
+            </div>
+            <button id="postBtn" class="btn btn-primary" type="button" style="width:100%">Post Update</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/event-feed.js"></script>
+  <script>
+    (async function () {
+      const eventsList = document.getElementById("eventsList");
+      const uploadsList = document.getElementById("uploadsList");
+      const feedTitle = document.getElementById("feedTitle");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const postPanel = document.getElementById("postPanel");
+      const postHint = document.getElementById("postHint");
+      const uploadType = document.getElementById("uploadType");
+      const uploadFile = document.getElementById("uploadFile");
+      const uploadCaption = document.getElementById("uploadCaption");
+      const postBtn = document.getElementById("postBtn");
+      const userMeta = document.getElementById("userMeta");
+      const errorBox = document.getElementById("errorBox");
+      const successBox = document.getElementById("successBox");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      let me = null;
+      let events = [];
+      let selectedId = "";
+      let channel = null;
+
+      function showError(msg) {
+        successBox.style.display = "none";
+        errorBox.style.display = "block";
+        errorBox.textContent = msg;
+      }
+      function showSuccess(msg) {
+        errorBox.style.display = "none";
+        successBox.style.display = "block";
+        successBox.textContent = msg;
+      }
+      function clearMsg() {
+        errorBox.style.display = "none";
+        successBox.style.display = "none";
+      }
+      function esc(v) {
+        const d = document.createElement("div");
+        d.textContent = v == null ? "" : String(v);
+        return d.innerHTML;
+      }
+      function fmtDate(v) {
+        if (!v) return "—";
+        try { return new Date(v).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }); } catch { return v; }
+      }
+
+      function selectedEvent() {
+        return events.find(function (e) { return e.id === selectedId; }) || null;
+      }
+
+      function renderEvents() {
+        if (!events.length) {
+          eventsList.innerHTML = '<div class="muted">No accessible events. SuperAdmin must assign you first.</div>';
+          return;
+        }
+        eventsList.innerHTML = events.map(function (e) {
+          var active = e.id === selectedId ? " active" : "";
+          return '<button type="button" class="event-btn' + active + '" data-event-id="' + esc(e.id) + '"><div class="t">' + esc(e.title) + '</div><div class="s">' + esc(e.event_date || "No date") + '</div></button>';
+        }).join("");
+      }
+
+      async function loadEvents() {
+        events = await MaxxEventFeed.listAccessibleEvents();
+        var params = new URLSearchParams(window.location.search || "");
+        var requested = params.get("event");
+        if (requested && events.some(function (e) { return e.id === requested; })) {
+          selectedId = requested;
+        } else if (!selectedId && events.length) {
+          selectedId = events[0].id;
+        } else if (selectedId && !events.some(function (e) { return e.id === selectedId; })) {
+          selectedId = events.length ? events[0].id : "";
+        }
+        renderEvents();
+      }
+
+      async function loadUploads() {
+        if (!selectedId) {
+          feedTitle.textContent = "Select an event";
+          document.getElementById("feedHint").textContent = "Choose an event on the left.";
+          uploadsList.innerHTML = '<div class="muted">Choose an event on the left.</div>';
+          return;
+        }
+        var ev = selectedEvent();
+        var myMem = null;
+        try {
+          if (me.role === "manager" || me.role === "client") {
+            myMem = await MaxxEventFeed.getMyEventMembership(selectedId);
+          }
+        } catch (_) {}
+
+        var myOpName = myMem && myMem.operation ? myMem.operation.name : "";
+        if (me.role === "manager" && myOpName) {
+          feedTitle.textContent = (ev ? ev.title : "Event") + " — " + myOpName;
+          document.getElementById("feedHint").textContent =
+            "Your operation: " + myOpName + ". Only this operation’s uploads are shown.";
+        } else if (me.role === "client") {
+          feedTitle.textContent = (ev ? ev.title : "Event") + " — Client Feed";
+          document.getElementById("feedHint").textContent =
+            "All operations for this event. Each update shows its operation name.";
+        } else {
+          feedTitle.textContent = (ev ? ev.title : "Event") + " — Live Feed (all operations)";
+          document.getElementById("feedHint").textContent =
+            "Admin view: every operation’s uploads. Operation name is shown on each post.";
+        }
+
+        const rows = await MaxxEventFeed.listUploads(selectedId);
+        if (!rows.length) {
+          uploadsList.innerHTML = '<div class="muted">No updates yet for this view.</div>';
+          return;
+        }
+        uploadsList.innerHTML = rows.map(function (u) {
+          var who = (u.uploader && (u.uploader.full_name || u.uploader.email)) || "Unknown";
+          var op = u.operation ? u.operation.name : "No operation";
+          var filePart = u.file_url
+            ? '<div class="actions"><a class="link-btn btn-sm" target="_blank" rel="noopener" href="' + esc(u.file_url) + '">Open file</a></div>'
+            : "";
+          return (
+            '<div class="item">' +
+              '<div class="item-title">' +
+                '<span class="tag">' + esc(u.upload_type) + '</span>' +
+                esc(who) +
+              '</div>' +
+              '<div class="op-line">Operation: ' + esc(op) + '</div>' +
+              '<div class="item-sub">' + esc(fmtDate(u.created_at)) + '</div>' +
+              '<div style="font-size:13px;line-height:1.6">' + esc(u.caption || "—") + '</div>' +
+              filePart +
+            '</div>'
+          );
+        }).join("");
+      }
+
+      function syncPostPanel() {
+        if (!MaxxEventFeed.canUpload(me.role) || !selectedId) {
+          postPanel.classList.add("hide");
+          return;
+        }
+        postPanel.classList.remove("hide");
+        if (me.role === "manager") {
+          MaxxEventFeed.getMyEventMembership(selectedId).then(function (mem) {
+            var op = mem && mem.operation ? mem.operation.name : "your assigned operation";
+            postHint.textContent = "Posting as operation: " + op + ". Other ops will not see these posts.";
+          }).catch(function () {
+            postHint.textContent = "You can post only on events assigned to you (your operation only).";
+          });
+        } else {
+          postHint.textContent = "Admin posts appear in the full feed. Prefer assigning managers per operation for day-to-day uploads.";
+        }
+      }
+
+      async function selectEvent(id) {
+        selectedId = id;
+        clearMsg();
+        renderEvents();
+        syncPostPanel();
+        await loadUploads();
+        // Keep URL shareable
+        var url = new URL(window.location.href);
+        url.searchParams.set("event", id);
+        window.history.replaceState({}, "", url.toString());
+      }
+
+      eventsList.addEventListener("click", function (e) {
+        var btn = e.target.closest("[data-event-id]");
+        if (!btn) return;
+        selectEvent(btn.getAttribute("data-event-id")).catch(function (err) {
+          showError(err.message || "Failed to load feed.");
+        });
+      });
+
+      refreshBtn.addEventListener("click", function () {
+        clearMsg();
+        loadUploads().catch(function (e) { showError(e.message); });
+      });
+
+      postBtn.addEventListener("click", async function () {
+        clearMsg();
+        try {
+          var current = selectedEvent();
+          await MaxxEventFeed.createUpload({
+            eventId: selectedId,
+            organizationId: current ? current.organization_id : me.organization_id,
+            uploadType: uploadType.value,
+            caption: uploadCaption.value.trim(),
+            file: uploadFile.files && uploadFile.files[0] ? uploadFile.files[0] : null,
+          });
+          uploadCaption.value = "";
+          uploadFile.value = "";
+          showSuccess("Update posted.");
+          await loadUploads();
+        } catch (e) {
+          var msg = e.message || "Failed to post update.";
+          if (/row-level security|RLS/i.test(msg)) {
+            msg = "Upload blocked. Check: (1) you are assigned to this event as manager, (2) event Upload Opens/Closes dates are empty or include now. SuperAdmin can fix assignment/window on Assign Users / Events.";
+          }
+          showError(msg);
+        }
+      });
+
+      logoutBtn.addEventListener("click", async function () {
+        try {
+          await MaxxAuth.signOut();
+          window.location.href = "login.html";
+        } catch (e) {
+          showError(e.message || "Failed to sign out.");
+        }
+      });
+
+      try {
+        const session = await MaxxAuth.requireAuth("login.html");
+        if (!session) return;
+        me = await MaxxAuth.getMe();
+
+        MaxxAuth.applyAdminNav(me.role);
+        if (!MaxxAuth.canAccessModule(me.role, "event_feed")) {
+          showError("Your role cannot access Event Feed.");
+          return;
+        }
+
+        if (!MaxxAuth.isFullAdmin(me.role)) {
+          var sub = document.getElementById("pageSubtitle");
+          if (sub) {
+            sub.textContent = me.role === "client"
+              ? "Client feed: see all operations for your assigned events. Each post shows its operation name."
+              : "Manager feed: you only see and post for your assigned operation. Operation name is shown on every update.";
+          }
+        } else {
+          var subAdmin = document.getElementById("pageSubtitle");
+          if (subAdmin) {
+            subAdmin.textContent = "Admin feed: all operations. Each post shows its operation name (Decor, Food, Photography, …).";
+          }
+        }
+
+        userMeta.textContent =
+          "Signed in as " + (me.email || "") +
+          " · role " + (me.role || "") +
+          " · org " + (me.organization_name || (me.role === "platform_owner" ? "Global" : "-"));
+
+        await loadEvents();
+        syncPostPanel();
+        await loadUploads();
+
+        channel = MaxxEventFeed.subscribeUploads(function () {
+          loadUploads().catch(function () {});
+        });
+      } catch (e) {
+        showError(e.message || "Failed to initialize feed.");
+      }
+
+      window.addEventListener("beforeunload", function () {
+        if (channel) {
+          MaxxEventFeed.unsubscribe(channel);
+          channel = null;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

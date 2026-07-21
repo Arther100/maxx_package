@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assign Event Users — MAXX Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin-nav.css">
+<style>
+:root{--black:#0A0A0A;--gold:#C9A84C;--gold-light:#E8C97A;--white:#F8F4EE;--charcoal:#1A1A1A;--mid:#2A2A2A;--muted:#666}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh}
+.btn-primary{background:var(--gold);color:var(--black);border:none;font-weight:700}
+.btn-primary:hover{background:var(--gold-light)}
+.btn-danger{border-color:rgba(255,80,80,.4);color:#ff8f8f}
+.btn-sm{padding:6px 10px;font-size:11px}
+.wrap{max-width:900px;margin:0 auto;padding:28px 20px 48px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:.04em;margin-bottom:6px}
+.title span{color:var(--gold)}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
+.meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+.panel{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;padding:16px}
+.panel h2{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.field input,.field select{width:100%;background:var(--black);border:1px solid var(--mid);border-radius:8px;padding:11px 12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none}
+.field input:focus,.field select:focus{border-color:rgba(201,168,76,.45)}
+.error{display:none;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.35);color:#ff8f8f;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.success{display:none;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.35);color:#7dffb0;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.muted{color:var(--muted);font-size:12px}
+.list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.item{border:1px solid var(--mid);border-radius:10px;padding:12px 14px;background:rgba(0,0,0,.25)}
+.item-title{font-size:14px;font-weight:600;margin-bottom:6px}
+.item-sub{font-size:12px;color:var(--muted)}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.tag{display:inline-block;font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid rgba(201,168,76,.3);color:rgba(248,244,238,.85)}
+</style>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="index.html">MA<span>XX</span> ADMIN</a>
+    <div class="nav" id="topNav">
+      <a class="link-btn" href="index.html" data-module="dashboard">Dashboard</a>
+      <a class="link-btn" href="events.html" data-module="events">Events</a>
+      <a class="link-btn" href="operations.html" data-module="operations">Operations</a>
+      <a class="link-btn" href="event-assign.html" data-module="event_assign">Assign Users</a>
+      <a class="link-btn" href="event-feed.html" data-module="event_feed">Event Feed</a>
+      <a class="link-btn" href="../bookers-details.html" data-module="leads">Leads</a>
+      <a class="link-btn" href="users.html" data-module="users">Users</a>
+      <a class="link-btn" href="../manual-entry.html" data-module="manual_entry">Manual Entry</a>
+      <a class="link-btn" href="../booking_form/index.html" data-module="booking_form">Booking Form</a>
+      <button id="logoutBtn" class="btn" type="button">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="title">Assign <span>Users</span></h1>
+    <p class="subtitle">Assign managers/clients to an event. Managers must pick an <a class="link-btn btn-sm" href="operations.html">operation</a> (Decor, Food, Photography, …). Feed is on <a class="link-btn btn-sm" href="event-feed.html">Event Feed</a>.</p>
+    <p class="meta" id="userMeta">Loading…</p>
+
+    <div id="errorBox" class="error"></div>
+    <div id="successBox" class="success"></div>
+
+    <section class="panel">
+      <h2>Select Event</h2>
+      <div class="field">
+        <label for="eventSelect">Event</label>
+        <select id="eventSelect"></select>
+      </div>
+
+      <h2 style="margin-top:18px">Assign to Selected Event</h2>
+      <p class="muted" style="margin-bottom:10px">Managers need an operation. Clients do not.</p>
+      <div class="field">
+        <label for="assignUser">User</label>
+        <select id="assignUser"></select>
+      </div>
+      <div class="field">
+        <label for="assignRole">Member Role</label>
+        <select id="assignRole">
+          <option value="manager">Manager</option>
+          <option value="client">Client</option>
+        </select>
+      </div>
+      <div class="field" id="operationField">
+        <label for="assignOperation">Operation *</label>
+        <select id="assignOperation"></select>
+      </div>
+      <button id="assignBtn" class="btn btn-primary" type="button" style="width:100%">Assign to Event</button>
+
+      <div style="margin-top:16px">
+        <div class="muted" style="margin-bottom:8px">Current Members</div>
+        <div id="membersList" class="list"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/event-feed.js"></script>
+  <script>
+    (async function () {
+      const eventSelect = document.getElementById("eventSelect");
+      const assignUser = document.getElementById("assignUser");
+      const assignRole = document.getElementById("assignRole");
+      const assignOperation = document.getElementById("assignOperation");
+      const operationField = document.getElementById("operationField");
+      const assignBtn = document.getElementById("assignBtn");
+      const membersList = document.getElementById("membersList");
+      const userMeta = document.getElementById("userMeta");
+      const errorBox = document.getElementById("errorBox");
+      const successBox = document.getElementById("successBox");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      let me = null;
+      let events = [];
+      let users = [];
+      let operations = [];
+
+      function showError(msg) {
+        successBox.style.display = "none";
+        errorBox.style.display = "block";
+        errorBox.textContent = msg;
+      }
+      function showSuccess(msg) {
+        errorBox.style.display = "none";
+        successBox.style.display = "block";
+        successBox.textContent = msg;
+      }
+      function clearMsg() {
+        errorBox.style.display = "none";
+        successBox.style.display = "none";
+      }
+      function esc(v) {
+        const d = document.createElement("div");
+        d.textContent = v == null ? "" : String(v);
+        return d.innerHTML;
+      }
+      function selectedEventId() {
+        return eventSelect.value || "";
+      }
+
+      function syncOperationField() {
+        var isManager = assignRole.value === "manager";
+        operationField.style.display = isManager ? "block" : "none";
+        assignOperation.required = isManager;
+      }
+
+      async function loadOperations() {
+        operations = await MaxxEventFeed.listActiveOperations();
+        assignOperation.innerHTML = operations.map(function (o) {
+          return '<option value="' + esc(o.id) + '">' + esc(o.name) + '</option>';
+        }).join("");
+        if (!operations.length) {
+          assignOperation.innerHTML = '<option value="">No operations — create some first</option>';
+        }
+      }
+
+      async function loadEvents() {
+        events = await MaxxEventFeed.listAccessibleEvents();
+        eventSelect.innerHTML = events.map(function (e) {
+          return '<option value="' + esc(e.id) + '">' + esc(e.title) + (e.event_date ? (" · " + esc(e.event_date)) : "") + '</option>';
+        }).join("");
+        if (!events.length) {
+          eventSelect.innerHTML = '<option value="">No events</option>';
+          return;
+        }
+        var params = new URLSearchParams(window.location.search || "");
+        var requested = params.get("event");
+        if (requested && events.some(function (e) { return e.id === requested; })) {
+          eventSelect.value = requested;
+        }
+      }
+
+      async function loadAssignableUsers() {
+        users = await MaxxEventFeed.listAssignableUsers();
+        assignUser.innerHTML = users.map(function (u) {
+          const name = u.full_name || u.email;
+          return '<option value="' + esc(u.id) + '" data-role="' + esc(u.role) + '">' + esc(name) + ' · ' + esc(u.role) + '</option>';
+        }).join("");
+        if (!users.length) {
+          assignUser.innerHTML = '<option value="">No manager/client users found</option>';
+          return;
+        }
+        var first = users[0];
+        if (first && (first.role === "manager" || first.role === "client")) {
+          assignRole.value = first.role;
+        }
+        syncOperationField();
+      }
+
+      async function loadMembers() {
+        const eventId = selectedEventId();
+        if (!eventId) {
+          membersList.innerHTML = '<div class="item-sub">Select an event.</div>';
+          return;
+        }
+        const rows = await MaxxEventFeed.listEventMembers(eventId);
+        if (!rows.length) {
+          membersList.innerHTML = '<div class="item-sub">No members assigned.</div>';
+          return;
+        }
+        membersList.innerHTML = rows.map(function (r) {
+          const label = (r.user && (r.user.full_name || r.user.email)) || r.user_id;
+          const email = r.user ? r.user.email : "";
+          const opName = r.operation ? r.operation.name : (r.member_role === "client" ? "Client (no operation)" : "—");
+          return '<div class="item"><div class="row"><div><div class="item-title">' + esc(label) + '</div><div class="item-sub">' + esc(email) + '</div><span class="tag">' + esc(r.member_role) + '</span> <span class="tag">' + esc(opName) + '</span></div><div><button class="btn btn-sm btn-danger" data-remove-member="' + esc(r.id) + '">Remove</button></div></div></div>';
+        }).join("");
+      }
+
+      assignUser.addEventListener("change", function () {
+        var opt = assignUser.options[assignUser.selectedIndex];
+        if (!opt) return;
+        var role = opt.getAttribute("data-role");
+        if (role === "manager" || role === "client") assignRole.value = role;
+        syncOperationField();
+      });
+
+      assignRole.addEventListener("change", syncOperationField);
+
+      eventSelect.addEventListener("change", function () {
+        clearMsg();
+        loadMembers().catch(function (e) { showError(e.message); });
+      });
+
+      assignBtn.addEventListener("click", async function () {
+        clearMsg();
+        try {
+          await MaxxEventFeed.assignMember(
+            selectedEventId(),
+            assignUser.value,
+            assignRole.value,
+            me,
+            assignRole.value === "manager" ? assignOperation.value : null
+          );
+          showSuccess("Member assigned.");
+          await loadMembers();
+        } catch (e) {
+          showError(e.message || "Failed to assign member.");
+        }
+      });
+
+      membersList.addEventListener("click", async function (e) {
+        const btn = e.target.closest("[data-remove-member]");
+        if (!btn) return;
+        clearMsg();
+        if (!confirm("Remove this member from event?")) return;
+        try {
+          await MaxxEventFeed.removeMember(btn.getAttribute("data-remove-member"));
+          showSuccess("Member removed.");
+          await loadMembers();
+        } catch (err) {
+          showError(err.message || "Failed to remove member.");
+        }
+      });
+
+      logoutBtn.addEventListener("click", async function () {
+        try {
+          await MaxxAuth.signOut();
+          window.location.href = "login.html";
+        } catch (e) {
+          showError(e.message || "Failed to sign out.");
+        }
+      });
+
+      try {
+        const session = await MaxxAuth.requireAuth("login.html");
+        if (!session) return;
+        me = await MaxxAuth.getMe();
+
+        MaxxAuth.applyAdminNav(me.role);
+
+        if (!MaxxEventFeed.canAssign(me.role)) {
+          showError("Only SuperAdmin / OpsAdmin can assign users to events.");
+          setTimeout(function () { window.location.href = MaxxAuth.homeForRole(me.role); }, 1200);
+          return;
+        }
+
+        userMeta.textContent =
+          "Signed in as " + (me.email || "") +
+          " · role " + (me.role || "") +
+          " · org " + (me.organization_name || "-");
+
+        await loadOperations();
+        await loadAssignableUsers();
+        await loadEvents();
+        await loadMembers();
+        syncOperationField();
+      } catch (e) {
+        showError(e.message || "Failed to initialize.");
+      }
+    })();
+  </script>
+</body>
+</html>

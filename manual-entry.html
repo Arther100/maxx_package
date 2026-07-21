@@ -107,6 +107,9 @@ textarea#pasteBox::placeholder{color:var(--muted)}
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin/config.js"></script>
+<script src="js/maxx-leads.js"></script>
 <script>
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
 
@@ -337,6 +340,16 @@ async function saveBooker(data) {
     submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
   };
 
+  // Save to Supabase DB (primary)
+  if (window.MaxxLeads && window.MaxxLeads.createPublicLead) {
+    try {
+      await window.MaxxLeads.createPublicLead(bookerData);
+    } catch (e) {
+      console.error("Failed to save lead to Supabase:", e);
+    }
+  }
+
+  // localStorage fallback
   try {
     const existing = JSON.parse(localStorage.getItem("maxx_bookers") || "[]");
     const dupIdx = existing.findIndex(b => b.quoteCode === bookerData.quoteCode);
@@ -347,6 +360,7 @@ async function saveBooker(data) {
     console.error("Failed to cache booker locally:", e);
   }
 
+  // Sheets fallback
   if (SHEETS_URL) {
     try {
       await fetch(SHEETS_URL, {

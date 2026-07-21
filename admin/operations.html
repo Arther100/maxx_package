@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operations — MAXX Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin-nav.css">
+<style>
+:root{--black:#0A0A0A;--gold:#C9A84C;--gold-light:#E8C97A;--white:#F8F4EE;--charcoal:#1A1A1A;--mid:#2A2A2A;--muted:#666}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh}
+.btn-primary{background:var(--gold);color:var(--black);border:none;font-weight:700}
+.btn-primary:hover{background:var(--gold-light)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.btn-danger{border-color:rgba(255,80,80,.45);color:#ff8f8f}
+.btn-sm{padding:7px 10px;font-size:11px}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 48px}
+.title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:.04em;margin-bottom:6px}
+.title span{color:var(--gold)}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.6}
+.steps{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:12px 14px;font-size:12px;color:rgba(248,244,238,.9);line-height:1.7;margin-bottom:18px}
+.steps strong{color:var(--gold)}
+.grid{display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;padding:16px}
+.panel h2{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--black);border:1px solid var(--mid);border-radius:8px;padding:11px 12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none}
+.field textarea{min-height:70px;resize:vertical}
+.meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+.error{display:none;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.35);color:#ff8f8f;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.success{display:none;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.35);color:#7dffb0;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{border:1px solid var(--mid);border-radius:10px;padding:12px 14px;background:rgba(0,0,0,.25)}
+.item-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.item-sub{font-size:12px;color:var(--muted);margin-bottom:8px}
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(201,168,76,.12);color:var(--gold)}
+.pill.off{background:rgba(255,80,80,.12);color:#ff8f8f}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.empty{color:var(--muted);font-size:13px;padding:18px 4px}
+.loading{color:var(--muted);font-size:13px}
+.check{display:flex;align-items:center;gap:8px;font-size:13px}
+</style>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="index.html">MA<span>XX</span> ADMIN</a>
+    <div class="nav" id="topNav">
+      <a class="link-btn" href="index.html" data-module="dashboard">Dashboard</a>
+      <a class="link-btn" href="events.html" data-module="events">Events</a>
+      <a class="link-btn" href="operations.html" data-module="operations">Operations</a>
+      <a class="link-btn" href="event-assign.html" data-module="event_assign">Assign Users</a>
+      <a class="link-btn" href="event-feed.html" data-module="event_feed">Event Feed</a>
+      <a class="link-btn" href="../bookers-details.html" data-module="leads">Leads</a>
+      <a class="link-btn" href="users.html" data-module="users">Users</a>
+      <a class="link-btn" href="../manual-entry.html" data-module="manual_entry">Manual Entry</a>
+      <a class="link-btn" href="../booking_form/index.html" data-module="booking_form">Booking Form</a>
+      <button id="logoutBtn" class="btn" type="button">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="title">Event <span>Operations</span></h1>
+    <p class="subtitle">Define operations (Decor, Food, Photography, …). Assign managers to an operation per event on Assign Users.</p>
+    <p class="meta" id="userMeta">Loading…</p>
+
+    <div class="steps">
+      <strong>Flow</strong><br>
+      1) Create operations here → 2) Create event → 3) <strong>Assign Users</strong> with operation (Decor / Food / …)
+    </div>
+
+    <div id="errorBox" class="error"></div>
+    <div id="successBox" class="success"></div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2 id="formTitle">Create Operation</h2>
+        <form id="opForm">
+          <input type="hidden" id="editingId" value="">
+          <div class="field">
+            <label for="name">Name *</label>
+            <input id="name" type="text" required placeholder="e.g. Photography">
+          </div>
+          <div class="field">
+            <label for="code">Code</label>
+            <input id="code" type="text" placeholder="photography">
+          </div>
+          <div class="field">
+            <label for="sortOrder">Sort Order</label>
+            <input id="sortOrder" type="number" value="0">
+          </div>
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="What this operation covers"></textarea>
+          </div>
+          <div class="field">
+            <label class="check"><input id="isActive" type="checkbox" checked> Active</label>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="saveBtn" class="btn btn-primary" type="submit" style="flex:1;padding:12px">Create Operation</button>
+            <button id="cancelBtn" class="btn" type="button" style="display:none;padding:12px">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px">
+          <h2 style="margin:0">Operations List</h2>
+          <button id="refreshBtn" class="btn" type="button">Refresh</button>
+        </div>
+        <div id="loadingBox" class="loading">Loading…</div>
+        <div id="opsList" class="list" style="display:none"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/operations.js"></script>
+  <script>
+    (async function () {
+      const errorBox = document.getElementById("errorBox");
+      const successBox = document.getElementById("successBox");
+      const loadingBox = document.getElementById("loadingBox");
+      const opsList = document.getElementById("opsList");
+      const userMeta = document.getElementById("userMeta");
+      const opForm = document.getElementById("opForm");
+      const saveBtn = document.getElementById("saveBtn");
+      const cancelBtn = document.getElementById("cancelBtn");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const formTitle = document.getElementById("formTitle");
+      const editingId = document.getElementById("editingId");
+
+      let me = null;
+      let cache = [];
+
+      function showError(m) { successBox.style.display = "none"; errorBox.style.display = "block"; errorBox.textContent = m; }
+      function showSuccess(m) { errorBox.style.display = "none"; successBox.style.display = "block"; successBox.textContent = m; }
+      function clearMsg() { errorBox.style.display = "none"; successBox.style.display = "none"; }
+      function esc(v) {
+        const d = document.createElement("div");
+        d.textContent = v == null ? "" : String(v);
+        return d.innerHTML;
+      }
+
+      function resetForm() {
+        editingId.value = "";
+        formTitle.textContent = "Create Operation";
+        saveBtn.textContent = "Create Operation";
+        cancelBtn.style.display = "none";
+        opForm.reset();
+        document.getElementById("isActive").checked = true;
+        document.getElementById("sortOrder").value = "0";
+      }
+
+      function startEdit(id) {
+        const row = cache.find(function (o) { return o.id === id; });
+        if (!row) return;
+        clearMsg();
+        editingId.value = row.id;
+        formTitle.textContent = "Edit Operation";
+        saveBtn.textContent = "Save Changes";
+        cancelBtn.style.display = "inline-block";
+        document.getElementById("name").value = row.name || "";
+        document.getElementById("code").value = row.code || "";
+        document.getElementById("sortOrder").value = row.sort_order != null ? row.sort_order : 0;
+        document.getElementById("description").value = row.description || "";
+        document.getElementById("isActive").checked = row.is_active !== false;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function render(rows) {
+        loadingBox.style.display = "none";
+        opsList.style.display = "flex";
+        cache = rows || [];
+        if (!rows.length) {
+          opsList.innerHTML = '<div class="empty">No operations yet. Create Decor, Food, Photography, etc.</div>';
+          return;
+        }
+        opsList.innerHTML = rows.map(function (o) {
+          return (
+            '<div class="item">' +
+              '<div class="item-title">' + esc(o.name) + '</div>' +
+              '<div class="item-sub">' + esc(o.code || "—") + (o.description ? (" · " + esc(o.description)) : "") + '</div>' +
+              '<span class="pill' + (o.is_active ? "" : " off") + '">' + (o.is_active ? "Active" : "Inactive") + '</span>' +
+              '<div class="actions">' +
+                '<button type="button" class="btn btn-sm" data-edit="' + esc(o.id) + '">Edit</button>' +
+                '<button type="button" class="btn btn-sm btn-danger" data-del="' + esc(o.id) + '" data-name="' + esc(o.name) + '">Delete</button>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+      }
+
+      async function load() {
+        loadingBox.style.display = "block";
+        opsList.style.display = "none";
+        try {
+          render(await MaxxOperations.listOperations(false));
+        } catch (e) {
+          loadingBox.style.display = "none";
+          showError(e.message || "Failed to load operations. Run migration 011 if table is missing.");
+        }
+      }
+
+      logoutBtn.addEventListener("click", async function () {
+        try { await MaxxAuth.signOut(); window.location.href = "login.html"; }
+        catch (e) { showError(e.message); }
+      });
+      refreshBtn.addEventListener("click", function () { clearMsg(); load(); });
+      cancelBtn.addEventListener("click", function () { clearMsg(); resetForm(); });
+
+      opsList.addEventListener("click", async function (e) {
+        const edit = e.target.closest("[data-edit]");
+        const del = e.target.closest("[data-del]");
+        if (edit) startEdit(edit.getAttribute("data-edit"));
+        if (del) {
+          if (!confirm('Delete operation "' + del.getAttribute("data-name") + '"?')) return;
+          try {
+            await MaxxOperations.deleteOperation(del.getAttribute("data-del"));
+            showSuccess("Operation deleted.");
+            if (editingId.value === del.getAttribute("data-del")) resetForm();
+            await load();
+          } catch (err) {
+            showError(err.message || "Delete failed (may be in use on event assignments).");
+          }
+        }
+      });
+
+      opForm.addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        clearMsg();
+        const payload = {
+          name: document.getElementById("name").value,
+          code: document.getElementById("code").value,
+          description: document.getElementById("description").value,
+          sortOrder: document.getElementById("sortOrder").value,
+          isActive: document.getElementById("isActive").checked,
+        };
+        saveBtn.disabled = true;
+        try {
+          if (editingId.value) {
+            await MaxxOperations.updateOperation(editingId.value, payload);
+            showSuccess("Operation updated.");
+          } else {
+            await MaxxOperations.createOperation(payload, me);
+            showSuccess("Operation created.");
+          }
+          resetForm();
+          await load();
+        } catch (err) {
+          showError(err.message || "Save failed.");
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = editingId.value ? "Save Changes" : "Create Operation";
+        }
+      });
+
+      try {
+        const session = await MaxxAuth.requireAuth("login.html");
+        if (!session) return;
+        me = await MaxxAuth.getMe();
+        if (!MaxxAuth.canAccessModule(me.role, "operations")) {
+          window.location.href = MaxxAuth.homeForRole(me.role);
+          return;
+        }
+        MaxxAuth.applyAdminNav(me.role);
+        userMeta.textContent = "Signed in as " + (me.email || "") + " · role " + (me.role || "");
+        await load();
+      } catch (e) {
+        showError(e.message || "Failed to init.");
+      }
+    })();
+  </script>
+</body>
+</html>
