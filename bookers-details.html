@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin/css/admin-nav.css">
-<link rel="stylesheet" href="admin/css/admin-ui.css?v=20261115">
+<link rel="stylesheet" href="admin/css/admin-ui.css?v=20261116">
 <style>
 .toolbar { display: grid; gap: 12px; margin-bottom: 16px; }
 .toolbar-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -169,13 +169,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="admin/config.js"></script>
 <script src="admin/js/auth.js"></script>
-<script src="js/maxx-leads.js?v=20261115"></script>
+<script src="js/maxx-leads.js?v=20261116"></script>
 <script>
 (function () {
   'use strict';
 
   var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec';
-  var STATUSES = ['New', 'Contacted', 'Quoted', 'Confirmed', 'Cancelled'];
+  var STATUSES = ['Incomplete', 'New', 'Contacted', 'Quoted', 'Confirmed', 'Cancelled'];
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   var L = window.MaxxLeads;
 
@@ -191,6 +191,22 @@
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function stepName(n) {
+    var names = L.STEP_NAMES || [];
+    return n && names[n - 1] ? names[n - 1] + ' (step ' + n + ' of ' + names.length + ')' : 'an early step';
+  }
+  // An Incomplete draft is "superseded" when the same phone later made a real booking.
+  function markSuperseded() {
+    var latestReal = {};
+    leads.forEach(function (l) {
+      if (l.status === 'Incomplete' || !l.phoneE164) return;
+      var t = String(l.submittedAt);
+      if (!latestReal[l.phoneE164] || t > latestReal[l.phoneE164]) latestReal[l.phoneE164] = t;
+    });
+    leads.forEach(function (l) {
+      l.superseded = l.status === 'Incomplete' && !!l.phoneE164 && !!latestReal[l.phoneE164] && latestReal[l.phoneE164] >= String(l.submittedAt);
     });
   }
   function pillClass(s) { return 'pill pill-' + String(s || 'new').toLowerCase(); }
@@ -284,11 +300,15 @@
     leads.forEach(function (l) { by[l.status] = (by[l.status] || 0) + 1; });
     var thisMonth = todayIst().slice(0, 7);
     var monthCount = leads.filter(function (l) { return istDate(l.submittedAt).slice(0, 7) === thisMonth; }).length;
-    var rate = total ? Math.round((by.Confirmed / total) * 100) : 0;
+    // Rate is out of real enquiries (an Incomplete draft is not an enquiry yet).
+    var real = total - by.Incomplete;
+    var rate = real ? Math.round((by.Confirmed / real) * 100) : 0;
+    var openDrafts = leads.filter(function (l) { return l.status === 'Incomplete' && !l.superseded; }).length;
     var cards = [
       ['all', total, 'Total leads'],
       ['_month', monthCount, 'Received this month'],
       ['New', by.New, 'New — need reply'],
+      ['Incomplete', openDrafts, 'Incomplete — follow up'],
       ['Quoted', by.Quoted, 'Quoted'],
       ['Confirmed', by.Confirmed, 'Confirmed'],
       ['_rate', rate + '%', 'Confirmed rate']
@@ -333,7 +353,8 @@
     return '<tr data-id="' + esc(l.id) + '">' +
       '<td data-label="Ref"><button class="link-cell" type="button" data-action="open">' + esc(l.quoteCode) + '</button></td>' +
       '<td data-label="Customer"><div class="cell-name">' + (needsReply ? '<span class="warn-dot" title="Not contacted yet"></span>' : '') + esc(l.name) + '</div>' +
-        (l.personName ? '<div class="cell-sub">' + esc(l.personName) + '</div>' : '') + '</td>' +
+        (l.personName ? '<div class="cell-sub">' + esc(l.personName) + '</div>' : '') +
+        (l.status === 'Incomplete' ? '<div class="cell-sub">' + (l.superseded ? 'Later booking from same number' : 'Stopped at: ' + esc(stepName(l.lastStep))) + '</div>' : '') + '</td>' +
       '<td data-label="Phone"><a class="phone" href="' + tel + '">' + esc(L.formatPhone(l.phone)) + '</a>' + (badPhone ? '<div class="cell-sub" style="color:var(--red)">Invalid number</div>' : '') + '</td>' +
       '<td data-label="Event">' + esc(l.eventType || '—') + '</td>' +
       '<td data-label="Event date">' + esc(fmtDay(l.date)) + '</td>' +
@@ -406,6 +427,7 @@
         $('list').innerHTML = '<div class="skeleton" style="height:64px;margin-bottom:10px"></div><div class="skeleton" style="height:64px;margin-bottom:10px"></div><div class="skeleton" style="height:64px"></div>';
       }
       leads = await L.listLeads();
+      markSuperseded();
       render();
       if (drawerId) {
         var cur = findLead(drawerId);
@@ -425,12 +447,14 @@
     if (!lead || lead.status === status) return;
     var prev = lead.status;
     lead.status = status;
+    markSuperseded();
     try {
       var saved = await L.updateLeadStatus(id, status);
       if (!saved) throw new Error('Not saved — you may not have permission.');
       toast(lead.name + ' → ' + status, 'ok');
     } catch (e) {
       lead.status = prev;
+      markSuperseded();
       if (selectEl) selectEl.value = prev;
       toast('Could not change status: ' + (e.message || e), 'err');
     }
@@ -460,7 +484,7 @@
     if (!l) return;
     $('dTitle').textContent = l.name;
     $('dCode').textContent = l.quoteCode + (l.source && l.source !== 'form' ? ' · ' + l.source : '');
-    var tplKey = (l.status === 'Confirmed') ? 'confirmed' : (l.status === 'Quoted' ? 'quote' : (l.status === 'Contacted' ? 'followup' : 'confirmation'));
+    var tplKey = (l.status === 'Confirmed') ? 'confirmed' : (l.status === 'Quoted' ? 'quote' : (l.status === 'Contacted' ? 'followup' : (l.status === 'Incomplete' ? 'complete' : 'confirmation')));
     var existingTpl = document.getElementById('tplSel');
     if (existingTpl) tplKey = existingTpl.value;
     var msg = L.buildMessage(tplKey, l);
@@ -481,6 +505,7 @@
         '<select class="select select-sm" id="dStatus" style="width:auto">' + STATUSES.map(function (s) { return '<option' + (s === l.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
         '<a class="btn-ui btn-sm" href="' + (l.phoneE164 ? 'tel:+' + esc(l.phoneE164) : 'tel:' + esc(l.phone)) + '">📞 Call</a></div></div>' +
 
+      (l.status === 'Incomplete' ? '<div class="banner"><strong>Not confirmed.</strong> ' + (l.superseded ? 'This number made a later booking, so this draft can probably be ignored.' : 'The customer left the booking form at <strong>' + esc(stepName(l.lastStep)) + '</strong>. Send a follow-up below.') + '</div>' : '') +
       '<div class="section"><h3 class="section-title">Send WhatsApp</h3><div class="wa-box">' +
         (l.phoneE164 ? '' : '<div class="banner banner-error">This phone number looks invalid, so WhatsApp can\'t be opened. Fix the number first.</div>') +
         '<div class="field"><label for="tplSel">Message template</label><select class="select" id="tplSel">' +

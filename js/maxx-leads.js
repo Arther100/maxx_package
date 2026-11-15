@@ -86,6 +86,7 @@
       source: row.source || "form",
       submittedAt: row.submitted_at || row.created_at || "",
       lastContactedAt: row.last_contacted_at || "",
+      lastStep: row.last_step || 0,
     };
   }
 
@@ -110,16 +111,27 @@
       status: b.status || "New",
       source: b.source || "form",
       submitted_at: b.submittedAtIso || undefined,
+      last_step: b.lastStep || undefined,
     };
   }
 
   /* ---------- writes ---------- */
 
   // Public booking form. The SERVER generates the quote code and returns it.
-  async function createPublicLead(bookerData) {
-    var res = await getClient().rpc("create_public_lead", { payload: toPayload(bookerData) });
+  // token = the draft token from saveDraft (migration 014); turns that draft into a confirmed lead.
+  async function createPublicLead(bookerData, token) {
+    var res = await getClient().rpc("create_public_lead", { payload: toPayload(bookerData), p_token: token || null });
     if (res.error) throw res.error;
     return res.data; // { id, quote_code, status }
+  }
+
+  // Saves / updates an "Incomplete" draft after each form step. Returns { quote_code, status, token }.
+  async function saveDraft(bookerData, token, reachedStep) {
+    var payload = toPayload(bookerData);
+    payload.last_step = reachedStep || 1;
+    var res = await getClient().rpc("save_public_lead_draft", { payload: payload, p_token: token || null });
+    if (res.error) throw res.error;
+    return res.data;
   }
 
   // Admin tools (manual entry / import). Needs superadmin / opsadmin / platform_owner.
@@ -242,6 +254,22 @@
       },
     },
     {
+      key: "complete",
+      label: "Complete your booking",
+      build: function (l) {
+        return [
+          "Hi " + l.name + " 🙏",
+          "This is *MAXX Events & Planners*. We saw you started a " + (l.eventType || "event") + " enquiry on our booking form but did not finish.",
+          "",
+          "Would you like our help to complete it? Reply here and we will take care of the rest.",
+          "🔖 Reference: *" + l.quoteCode + "*",
+          "",
+          "— MAXX Events & Planners",
+          BUSINESS_PHONE_DISPLAY,
+        ].join("\n");
+      },
+    },
+    {
       key: "quote",
       label: "Quote ready",
       build: function (l) {
@@ -307,6 +335,8 @@
     buildMessage: buildMessage,
     mapLeadRow: mapLeadRow,
     createPublicLead: createPublicLead,
+    saveDraft: saveDraft,
+    STEP_NAMES: ["Event type", "Details", "Venue", "Services", "Menu", "Review"],
     createAdminLead: createAdminLead,
     listLeads: listLeads,
     listActivity: listActivity,

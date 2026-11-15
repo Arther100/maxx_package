@@ -15,6 +15,7 @@ This project now includes an additive migration at:
 - `db/migrations/011_operations_and_event_member_ops.sql`
 - `db/migrations/012_upload_operation_scope.sql`
 - `db/migrations/013_leads_hardening_activity.sql`
+- `db/migrations/014_incomplete_leads_drafts.sql`
 
 It sets up:
 
@@ -122,3 +123,17 @@ The web app used to return every lead to anyone and let anyone change/delete row
 2. Paste the updated `maxx-quotes-sheet.gs`, then Deploy -> Manage deployments -> New version.
 3. The leads dashboard "More -> Import from Google Sheet" asks for that token once (not stored).
 Without `ADMIN_TOKEN` the read/admin actions stay disabled. The booking form can still add NEW rows.
+
+
+## Migration 014 (drop-off protection: Incomplete leads)
+
+Run `014_incomplete_leads_drafts.sql` AFTER 013 and BEFORE using the new booking form.
+
+- New lead status `Incomplete` (customer gave name + phone but did not press Confirm).
+- `save_public_lead_draft(payload, p_token)`: the booking form saves/updates a draft after every step from
+  "Details" onward. A secret token (kept only in the customer's browser tab, stored in the DB only as a SHA-256 hash)
+  is needed to update a draft, so nobody else can edit it.
+- `create_public_lead(payload, p_token)`: the final **Confirm My Request** turns the draft into `New`
+  (the old one-argument version is dropped; old callers still work because `p_token` is optional).
+- `leads.last_step` records how far the customer got. The Leads page shows "Stopped at: Venue (step 3 of 6)",
+  an Incomplete filter/stat and a "Complete your booking" WhatsApp template.
