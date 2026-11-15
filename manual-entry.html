@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manual Entry — MAXX Events & Planners</title>
-<meta name="description" content="Add old enquiries manually to MAXX Events">
+<meta name="robots" content="noindex,nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin/css/admin-nav.css">
+<link rel="stylesheet" href="admin/css/admin-ui.css">
 <style>
 :root {
   --black: #0A0A0A;
@@ -68,14 +70,21 @@ textarea#pasteBox::placeholder{color:var(--muted)}
 </head>
 <body>
 
-<div class="logo-header">
-  <a href="bookers-details.html">
-    <div>
-      <div class="logo-text">MA<span>XX</span> EVENTS</div>
-      <div class="logo-sub">Manual Entry</div>
-    </div>
-  </a>
-</div>
+<header class="admin-header">
+  <a class="admin-brand" href="admin/index.html">MA<span>XX</span> ADMIN</a>
+  <div class="admin-nav" id="topNav">
+    <a class="admin-link" href="admin/index.html" data-module="dashboard">Dashboard</a>
+    <a class="admin-link" href="admin/events.html" data-module="events">Events</a>
+    <a class="admin-link" href="admin/operations.html" data-module="operations">Operations</a>
+    <a class="admin-link" href="admin/event-assign.html" data-module="event_assign">Assign Users</a>
+    <a class="admin-link" href="admin/event-feed.html" data-module="event_feed">Event Feed</a>
+    <a class="admin-link" href="bookers-details.html" data-module="leads">Leads</a>
+    <a class="admin-link" href="admin/users.html" data-module="users">Users</a>
+    <a class="admin-link" href="manual-entry.html" data-module="manual_entry">Manual Entry</a>
+    <a class="admin-link" href="booking_form/index.html" data-module="booking_form">Booking Form</a>
+    <button id="logoutBtn" class="admin-btn" type="button">Sign Out</button>
+  </div>
+</header>
 
 <section class="page-header">
   <div class="page-eyebrow">Import Quote</div>
@@ -109,18 +118,10 @@ textarea#pasteBox::placeholder{color:var(--muted)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="admin/config.js"></script>
+<script src="admin/js/auth.js"></script>
 <script src="js/maxx-leads.js"></script>
 <script>
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
-
-function generateCode() {
-  const n = new Date();
-  const yy = String(n.getFullYear()).slice(2);
-  const mm = String(n.getMonth() + 1).padStart(2, "0");
-  const dd = String(n.getDate()).padStart(2, "0");
-  const rand = String(Math.floor(Math.random() * 900) + 100);
-  return `MX${yy}${mm}${dd}-${rand}`;
-}
 
 function cleanValue(val) {
   return val.replace(/^\*+|\*+$/g, "").trim();
@@ -284,7 +285,6 @@ function parseEnquiryText(text) {
   result.notes = "";
   result.status = "New";
   result.source = "manual";
-  if (!result.quoteCode) result.quoteCode = generateCode();
   return result;
 }
 
@@ -320,7 +320,7 @@ function escapeHtml(str) {
 
 async function saveBooker(data) {
   const bookerData = {
-    quoteCode: data.quoteCode,
+    quoteCode: data.quoteCode || "",
     name: data.name,
     phone: data.phone,
     personName: data.personName || "",
@@ -337,57 +337,38 @@ async function saveBooker(data) {
     notes: data.notes || "",
     status: data.status || "New",
     source: data.source || "manual",
-    submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
   };
 
-  // Save to Supabase DB (primary)
-  if (window.MaxxLeads && window.MaxxLeads.createPublicLead) {
-    try {
-      await window.MaxxLeads.createPublicLead(bookerData);
-    } catch (e) {
-      console.error("Failed to save lead to Supabase:", e);
-    }
-  }
+  // Database is the single source of truth. If this fails we STOP and show the error
+  // (the old version silently continued and showed "Saved").
+  const saved = await window.MaxxLeads.createAdminLead(bookerData);
+  bookerData.quoteCode = saved.quote_code;
 
-  // localStorage fallback
-  try {
-    const existing = JSON.parse(localStorage.getItem("maxx_bookers") || "[]");
-    const dupIdx = existing.findIndex(b => b.quoteCode === bookerData.quoteCode);
-    if (dupIdx !== -1) existing[dupIdx] = bookerData;
-    else existing.push(bookerData);
-    localStorage.setItem("maxx_bookers", JSON.stringify(existing));
-  } catch (e) {
-    console.error("Failed to cache booker locally:", e);
-  }
-
-  // Sheets fallback
+  // Optional backup copy to the Google Sheet (write-only).
   if (SHEETS_URL) {
-    try {
-      await fetch(SHEETS_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          quoteCode: bookerData.quoteCode,
-          name: bookerData.name,
-          phone: bookerData.phone,
-          personName: bookerData.personName,
-          eventType: bookerData.eventType,
-          date: bookerData.date,
-          location: bookerData.location,
-          venueType: bookerData.venueType,
-          venueName: bookerData.venueNote,
-          budget: bookerData.budget,
-          servicesCount: bookerData.servicesCount,
-          nonVegCount: bookerData.nonVegCount,
-          vegCount: bookerData.vegCount,
-          notes: bookerData.notes,
-          status: bookerData.status,
-          source: bookerData.source,
-          services: bookerData.services,
-        }),
-      });
-    } catch (e) {
-      console.error("Failed to save booker to sheet:", e);
-    }
+    fetch(SHEETS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify({
+        quoteCode: bookerData.quoteCode,
+        name: bookerData.name,
+        phone: bookerData.phone,
+        personName: bookerData.personName,
+        eventType: bookerData.eventType,
+        date: bookerData.date,
+        location: bookerData.location,
+        venueType: bookerData.venueType,
+        venueName: bookerData.venueNote,
+        budget: bookerData.budget,
+        servicesCount: bookerData.servicesCount,
+        nonVegCount: bookerData.nonVegCount,
+        vegCount: bookerData.vegCount,
+        notes: bookerData.notes,
+        status: bookerData.status,
+        source: bookerData.source,
+        services: bookerData.services,
+      }),
+    }).catch(() => {});
   }
 
   return bookerData;
@@ -406,17 +387,28 @@ async function handlePasteAndSave() {
     showError("Could not find Name and WhatsApp number in the message. Check the paste is the full quote format.");
     return;
   }
+  if (!window.MaxxLeads.isValidPhone(data.phone)) {
+    showError("The WhatsApp number \"" + data.phone + "\" is not a valid mobile number. Fix it in the pasted text and try again.");
+    return;
+  }
 
   const btn = document.getElementById("saveBtn");
   btn.disabled = true;
   btn.textContent = "Saving…";
 
   try {
-    await saveBooker(data);
+    const saved = await saveBooker(data);
+    data.quoteCode = saved.quoteCode;
     document.getElementById("pasteStep").style.display = "none";
     document.getElementById("successCode").textContent = data.quoteCode;
     document.getElementById("successSummary").innerHTML = buildSuccessSummary(data);
     document.getElementById("successPanel").style.display = "block";
+  } catch (e) {
+    console.error("Manual entry save failed:", e);
+    const m = String((e && e.message) || e);
+    showError(m.includes("invalid_phone") ? "The phone number looks invalid. Include 10 digits (or the country code)."
+      : m.includes("not_allowed") || m.includes("permission") ? "You do not have permission to add leads."
+      : "Could not save to the database: " + m);
   } finally {
     btn.disabled = false;
     btn.textContent = "✨ Paste & Save";
@@ -429,6 +421,26 @@ function resetForm() {
   document.getElementById("pasteStep").style.display = "block";
   document.getElementById("successPanel").style.display = "none";
 }
+// ── Admin gate: only signed-in admins may use this page ──
+(async function () {
+  try {
+    if (!window.MaxxAuth) throw new Error(window.MaxxAuthInitError || "Auth is not available.");
+    const session = await MaxxAuth.requireAuth("admin/login.html");
+    if (!session) return;
+    const me = await MaxxAuth.getMe();
+    if (!MaxxAuth.canAccessModule(me.role, "manual_entry")) {
+      window.location.href = MaxxAuth.isFullAdmin(me.role) ? "admin/index.html" : "admin/event-feed.html";
+      return;
+    }
+    MaxxAuth.applyAdminNav(me.role);
+    document.getElementById("logoutBtn").addEventListener("click", async function () {
+      try { await MaxxAuth.signOut(); } finally { window.location.href = "admin/login.html"; }
+    });
+  } catch (e) {
+    console.error(e);
+    showError("Could not verify your login: " + ((e && e.message) || e));
+  }
+})();
 </script>
 </body>
 </html>

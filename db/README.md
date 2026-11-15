@@ -14,6 +14,7 @@ This project now includes an additive migration at:
 - `db/migrations/010_fix_manager_upload_rls.sql`
 - `db/migrations/011_operations_and_event_member_ops.sql`
 - `db/migrations/012_upload_operation_scope.sql`
+- `db/migrations/013_leads_hardening_activity.sql`
 
 It sets up:
 
@@ -96,3 +97,28 @@ Expected: both rows show `id_aligned = true`.
 
 With migration `002`, RLS uses Supabase auth context automatically via `auth.uid()`.
 No manual `set_config(...)` is needed in normal app requests.
+
+
+## Migration 013 (leads hardening + activity log)
+
+Run `013_leads_hardening_activity.sql` in the Supabase SQL editor **before** deploying the new
+`bookers-details.html`, `manual-entry.html`, `booking_form/` and `js/maxx-leads.js`.
+
+What it changes:
+
+- `create_public_lead` (public booking form): server creates the unique quote code, status/source are forced
+  to `New`/`form`, phone is validated + normalised (India +91), max 5 leads per phone per hour, length caps.
+  It can no longer overwrite an existing lead.
+- `admin_save_lead` (new): used by Manual Entry / Import. Needs `superadmin`, `opsadmin` or `platform_owner`.
+- `lead_activity` (new): status history, WhatsApp messages opened, notes. Status changes are logged by a trigger.
+- `log_lead_whatsapp` (new): logs a WhatsApp message and moves `New` -> `Contacted`.
+- `leads.phone_e164` + `leads.last_contacted_at`, new indexes, realtime enabled for `leads` and `lead_activity`.
+
+## Google Sheet script (`maxx-quotes-sheet.gs`)
+
+The web app used to return every lead to anyone and let anyone change/delete rows. Now:
+
+1. Apps Script -> Project Settings -> Script properties -> add `ADMIN_TOKEN` = a long random string.
+2. Paste the updated `maxx-quotes-sheet.gs`, then Deploy -> Manage deployments -> New version.
+3. The leads dashboard "More -> Import from Google Sheet" asks for that token once (not stored).
+Without `ADMIN_TOKEN` the read/admin actions stay disabled. The booking form can still add NEW rows.

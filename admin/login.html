@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
 <title>Admin Login — MAXX Events</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin-ui.css">
 <style>
 :root {
   --black: #0A0A0A;
@@ -29,6 +31,7 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 .btn:hover{background:var(--gold-light)}
 .btn:disabled{opacity:.6;cursor:not-allowed}
 .error{display:none;margin-top:12px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.35);color:#ff8f8f;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5}
+.pw{position:relative}.pw input{padding-right:64px}.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--gold);font-size:12px;font-weight:600;padding:8px 10px;cursor:pointer;border-radius:6px}.pw button:hover{background:rgba(201,168,76,.1)}
 .hint{margin-top:16px;font-size:11px;color:var(--muted);line-height:1.6;text-align:center}
 </style>
 </head>
@@ -44,10 +47,10 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
       </div>
       <div class="field">
         <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="current-password" required placeholder="Your password">
+        <div class="pw"><input id="password" type="password" autocomplete="current-password" required placeholder="Your password"><button type="button" id="pwToggle" aria-label="Show password">Show</button></div>
       </div>
       <button id="loginBtn" class="btn" type="submit">Sign In</button>
-      <div id="errorBox" class="error"></div>
+      <div id="errorBox" class="error" role="alert"></div>
     </form>
 
     <p class="hint">Use your Supabase Auth account linked to <code>public.users</code>.</p>
@@ -66,8 +69,17 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
 
       function showError(message) {
         errorBox.style.display = "block";
-        errorBox.textContent = message;
+        errorBox.textContent = /invalid login credentials/i.test(message || "")
+          ? "Email or password is incorrect."
+          : message;
       }
+
+      document.getElementById("pwToggle").addEventListener("click", function () {
+        const show = passwordEl.type === "password";
+        passwordEl.type = show ? "text" : "password";
+        this.textContent = show ? "Hide" : "Show";
+        this.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      });
 
       if (!window.MaxxAuth) {
         showError(

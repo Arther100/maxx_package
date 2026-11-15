@@ -96,15 +96,6 @@ function formatFoodWhatsAppBlock(form, vegMenuCount) {
   return lines.join("\n");
 }
 
-function generateCode() {
-  const n = new Date();
-  const yy = String(n.getFullYear()).slice(2);
-  const mm = String(n.getMonth()+1).padStart(2,"0");
-  const dd = String(n.getDate()).padStart(2,"0");
-  const rand = String(Math.floor(Math.random()*900)+100);
-  return `MX${yy}${mm}${dd}-${rand}`;
-}
-
 const EVENT_TYPES = [
   { id: "puberty", label: "🌸 Puberty Ceremony", sub: "Manjal Neerattu Vizha" },
   { id: "wedding", label: "💍 Wedding / Reception", sub: "Full wedding or reception" },
@@ -319,12 +310,14 @@ function StepTitle({ icon, title, sub }) {
   );
 }
 
-function Field({ label, value, onChange, placeholder, type="text" }) {
+function Field({ label, value, onChange, placeholder, type="text", error, inputMode, autoComplete }) {
   return (
     <div style={{ marginBottom:13 }}>
       <label style={labelStyle}>{label}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ width:"100%", border:"1.5px solid #dde2f0", borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, outline:"none", fontFamily:"inherit", boxSizing:"border-box", background:"#fff" }} />
+        inputMode={inputMode} autoComplete={autoComplete} aria-invalid={error ? "true" : undefined}
+        style={{ width:"100%", border:`1.5px solid ${error ? "#d93025" : "#dde2f0"}`, borderRadius:8, padding:"10px 12px", fontSize:13, color:NAVY, outline:"none", fontFamily:"inherit", boxSizing:"border-box", background:"#fff" }} />
+      {error && <div role="alert" style={{ color:"#d93025", fontSize:11, marginTop:4 }}>{error}</div>}
     </div>
   );
 }
@@ -405,6 +398,9 @@ function App() {
     customBudget: "", quoteCode: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [waUrl, setWaUrl] = useState("");
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -456,10 +452,65 @@ function App() {
     ? `₹${form.customBudget}`
     : form.budget;
 
-  const buildWhatsApp = async () => {
-    const code = generateCode();
+  const friendlyError = (e) => {
+    const m = String((e && e.message) || e || "");
+    if (m.includes("invalid_phone")) return "Please enter a valid WhatsApp number, for example 98765 43210.";
+    if (m.includes("invalid_name")) return "Please enter your full name.";
+    if (m.includes("rate_limited")) return "Too many requests from this number. Please try again later or call us on +91 87786 67396.";
+    return "We could not save your request right now. Please check your internet and try again.";
+  };
+
+  // skipDb = true only for the "send on WhatsApp anyway" fallback when saving failed.
+  const buildWhatsApp = async (skipDb) => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError("");
+
+    // Open a blank tab NOW (inside the tap) so phone/browser popup blockers allow it.
+    // It is pointed at WhatsApp once the request is saved.
+    let popup = null;
+    try { popup = window.open("", "_blank"); } catch (e) { popup = null; }
+
     const selectedEvent = EVENT_TYPES.find(e => e.id === form.eventType);
     const selectedVenue = VENUE_TYPES.find(v => v.id === form.venueType);
+    const bookerData = {
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      personName: form.personName || "",
+      eventType: selectedEvent?.label || form.eventType,
+      date: form.date,
+      location: form.location,
+      venueType: selectedVenue?.label || form.venueType,
+      venueNote: form.venueNote || "",
+      budget: budgetDisplay,
+      servicesCount: totalSelected,
+      nonVegCount: form.nonVegCount || "",
+      vegCount: form.vegCount || "",
+      notes: [form.notes, formatVegMenusText(form.vegMenus)].filter(Boolean).join(" | ") || "",
+      vegMenus: form.vegMenus,
+      services: form.selected,
+      status: "New",
+      source: "form",
+    };
+
+    // 1) Save to the database FIRST. The server creates the unique quote reference.
+    let code = "";
+    if (skipDb) {
+      code = "MXW-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    } else {
+      try {
+        const saved = await window.MaxxLeads.createPublicLead(bookerData);
+        code = saved && saved.quote_code;
+        if (!code) throw new Error("No reference returned");
+      } catch (e) {
+        console.error("Failed to save lead to Supabase:", e);
+        if (popup) { try { popup.close(); } catch (_) {} }
+        setSaveError(friendlyError(e));
+        setSaving(false);
+        return;
+      }
+    }
+
     const personLabel =
       form.eventType === "puberty" ? "Girl's Name" :
       form.eventType === "wedding" ? "Bride / Groom Name" :
@@ -506,58 +557,26 @@ function App() {
       `_Sent via MAXX Events Booking Form_`,
     ].filter(v => v !== null).join("\n");
 
-    const bookerData = {
-      quoteCode: code,
-      name: form.name,
-      phone: form.phone,
-      personName: form.personName || "",
-      eventType: selectedEvent?.label || form.eventType,
-      date: form.date,
-      location: form.location,
-      venueType: selectedVenue?.label || form.venueType,
-      venueNote: form.venueNote || "",
-      budget: budgetDisplay,
-      servicesCount: totalSelected,
-      nonVegCount: form.nonVegCount || "",
-      vegCount: form.vegCount || "",
-      notes: [form.notes, formatVegMenusText(form.vegMenus)].filter(Boolean).join(" | ") || "",
-      vegMenus: form.vegMenus,
-      services: form.selected,
-      status: "New",
-      source: "form",
-      submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-    };
-
-    // Priority 6: save lead to Supabase DB (primary)
-    if (window.MaxxLeads && window.MaxxLeads.createPublicLead) {
-      try {
-        await window.MaxxLeads.createPublicLead(bookerData);
-      } catch (e) {
-        console.error("Failed to save lead to Supabase:", e);
-        alert("Saved locally/WhatsApp, but DB save failed: " + (e.message || e) + "\n\nCheck that migration 005 was run in Supabase.");
-      }
-    }
-
-    // Keep Sheets sync (legacy)
-    if (SHEETS_URL) {
+    // 2) Backup copy to the Google Sheet (write-only, fire and forget).
+    if (SHEETS_URL && !skipDb) {
       fetch(SHEETS_URL, {
         method: "POST",
         mode: "no-cors",
         body: JSON.stringify({
           quoteCode: code,
-          name: form.name,
-          phone: form.phone,
-          personName: form.personName || "",
-          eventType: selectedEvent?.label || form.eventType,
-          date: form.date,
-          location: form.location,
-          venueType: selectedVenue?.label || form.venueType,
-          venueName: form.venueNote || "",
-          budget: budgetDisplay,
+          name: bookerData.name,
+          phone: bookerData.phone,
+          personName: bookerData.personName,
+          eventType: bookerData.eventType,
+          date: bookerData.date,
+          location: bookerData.location,
+          venueType: bookerData.venueType,
+          venueName: bookerData.venueNote,
+          budget: bookerData.budget,
           servicesCount: totalSelected,
-          nonVegCount: form.nonVegCount || "",
-          vegCount: form.vegCount || "",
-          notes: [form.notes, formatVegMenusText(form.vegMenus)].filter(Boolean).join(" | ") || "",
+          nonVegCount: bookerData.nonVegCount,
+          vegCount: bookerData.vegCount,
+          notes: bookerData.notes,
           status: "New",
           source: "form",
           services: form.selected,
@@ -565,25 +584,18 @@ function App() {
       }).catch(() => {});
     }
 
-    // Keep localStorage fallback for Bookers Details offline view
-    try {
-      const existing = JSON.parse(localStorage.getItem("maxx_bookers") || "[]");
-      const dupIdx = existing.findIndex(b => b.quoteCode === code);
-      if (dupIdx !== -1) existing[dupIdx] = bookerData;
-      else existing.push(bookerData);
-      localStorage.setItem("maxx_bookers", JSON.stringify(existing));
-    } catch (e) {
-      console.error("Failed to save booker to localStorage:", e);
-    }
-
+    // 3) Open WhatsApp (to MAXX). The success screen also shows a button in case a popup was blocked.
+    const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+    setWaUrl(url);
     setForm(f => ({ ...f, quoteCode: code }));
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
+    if (popup) { try { popup.location.href = url; } catch (_) { window.open(url, "_blank"); } }
     setSubmitted(true);
+    setSaving(false);
   };
 
   const canNext = () => {
     if (step === 0) return !!form.eventType;
-    if (step === 1) return form.name && form.phone && form.date && form.location && form.budget &&
+    if (step === 1) return form.name.trim().length >= 2 && window.MaxxLeads.isValidPhone(form.phone) && form.date && form.location && form.budget &&
       (form.budget !== "₹15,00,000+" || form.customBudget.trim());
     if (step === 2) return !!form.venueType;
     if (step === 3) return totalSelected > 0;
@@ -602,10 +614,16 @@ function App() {
       <div style={{ minHeight:"100vh", background:"#f0f3fa", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
         <div style={{ background:"#fff", borderRadius:16, padding:36, textAlign:"center", maxWidth:380, width:"100%", boxShadow:"0 8px 40px rgba(13,27,75,0.12)" }}>
           <div style={{ fontSize:52, marginBottom:10 }}>🎉</div>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:22, fontWeight:700, color:NAVY, marginBottom:8 }}>Quote Sent!</div>
+          <div style={{ fontFamily:"Georgia,serif", fontSize:22, fontWeight:700, color:NAVY, marginBottom:8 }}>Request Saved!</div>
           <p style={{ color:"#556", fontSize:13, lineHeight:1.8, marginBottom:16 }}>
-            Your request has been sent to MAXX Events on WhatsApp. We'll reply with your personalised package price soon!
+            Your request is saved with MAXX Events. If WhatsApp did not open, tap the button below and press <strong>Send</strong>. We'll reply with your personalised package price soon!
           </p>
+          {waUrl && (
+            <a href={waUrl} target="_blank" rel="noopener noreferrer"
+              style={{ display:"block", background:"#25D366", color:"#fff", textDecoration:"none", borderRadius:10, padding:"12px 16px", fontWeight:800, fontSize:14, marginBottom:16 }}>
+              Open WhatsApp
+            </a>
+          )}
           <div style={{ background:"#fffbf0", border:`1.5px solid ${GOLD}`, borderRadius:10, padding:"12px 16px", marginBottom:16 }}>
             <div style={{ fontSize:10, color:GOLD, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:4 }}>Your Quote Reference</div>
             <div style={{ fontSize:20, fontWeight:800, color:NAVY, letterSpacing:"0.08em" }}>{form.quoteCode}</div>
@@ -615,7 +633,7 @@ function App() {
             <div style={{ fontSize:10, color:GOLD, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:3 }}>Direct Contact</div>
             <div style={{ fontSize:15, fontWeight:700, color:NAVY }}>📱 +91 87786 67396</div>
           </div>
-          <button onClick={() => { setSubmitted(false); setStep(0); setMenuTab("breakfast"); setCateringTab("veg"); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},vegMenus:emptyVegMenus(),nonVegCount:"",vegCount:"",notes:"",customBudget:"",quoteCode:"" }); }}
+          <button onClick={() => { setSubmitted(false); setSaveError(""); setWaUrl(""); setStep(0); setMenuTab("breakfast"); setCateringTab("veg"); setForm({ name:"",phone:"",personName:"",date:"",location:"",budget:"",venueType:"",venueNote:"",eventType:"",selected:{},vegMenus:emptyVegMenus(),nonVegCount:"",vegCount:"",notes:"",customBudget:"",quoteCode:"" }); }}
             style={{ background:NAVY, color:"#fff", border:"none", borderRadius:8, padding:"11px 28px", fontSize:14, fontWeight:600, cursor:"pointer" }}>
             New Enquiry
           </button>
@@ -677,7 +695,7 @@ function App() {
           <div>
             <StepTitle icon="📋" title="Your Details" sub="Fill in your basic info to get started" />
             <Field label="Your Name *" value={form.name} onChange={v => set("name",v)} placeholder="Full name" />
-            <Field label="WhatsApp Number *" value={form.phone} onChange={v => set("phone",v)} placeholder="+91 98765 43210" type="tel" />
+            <Field label="WhatsApp Number *" value={form.phone} onChange={v => set("phone",v)} placeholder="+91 98765 43210" type="tel" inputMode="tel" autoComplete="tel" error={form.phone.trim() && !window.MaxxLeads.isValidPhone(form.phone) ? "Enter a valid 10-digit mobile number (or with country code)." : ""} />
             <Field label="Bride / Groom / Girl's Name" value={form.personName} onChange={v => set("personName",v)} placeholder="Name of the person being celebrated" />
             <Field label="Event Date *" value={form.date} onChange={v => set("date",v)} type="date" />
             <Field label="Event City / Location *" value={form.location} onChange={v => set("location",v)} placeholder="e.g. Chengalpet, Chennai" />
@@ -931,10 +949,21 @@ function App() {
             <div style={{ background:"#e8f5e8", border:"1px solid #b8ddb8", borderRadius:10, padding:"12px 16px", marginBottom:16, fontSize:12, color:"#2e7d32", lineHeight:1.75 }}>
               📱 Tapping <strong>Get My Quote</strong> opens WhatsApp and sends your details directly to MAXX Events on <strong>+91 87786 67396</strong>
             </div>
-            <button onClick={buildWhatsApp}
-              style={{ width:"100%", background:"#25D366", border:"none", borderRadius:12, padding:"16px 20px", fontSize:15, fontWeight:800, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:10, boxShadow:"0 4px 16px rgba(37,211,102,0.35)" }}>
+            {saveError && (
+              <div role="alert" style={{ background:"#fdecea", border:"1px solid #f5c6c2", borderRadius:10, padding:"12px 16px", marginBottom:12, fontSize:12.5, color:"#b3261e", lineHeight:1.7 }}>
+                {saveError}
+                <div style={{ marginTop:8 }}>
+                  <button onClick={() => buildWhatsApp(true)} disabled={saving}
+                    style={{ background:"transparent", border:"1px solid #b3261e", color:"#b3261e", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                    Send on WhatsApp anyway
+                  </button>
+                </div>
+              </div>
+            )}
+            <button onClick={() => buildWhatsApp(false)} disabled={saving}
+              style={{ width:"100%", background:"#25D366", border:"none", borderRadius:12, padding:"16px 20px", fontSize:15, fontWeight:800, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:10, boxShadow:"0 4px 16px rgba(37,211,102,0.35)", opacity: saving ? 0.7 : 1 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Get My Quote on WhatsApp
+              {saving ? "Saving your request…" : "Get My Quote on WhatsApp"}
             </button>
           </div>
         )}
@@ -948,7 +977,7 @@ function App() {
             </button>
           )}
           {step < steps.length-1 && (
-            <button onClick={() => { if (canNext()) setStep(s => s+1); }}
+            <button aria-disabled={!canNext()} onClick={() => { if (canNext()) setStep(s => s+1); }}
               style={{ flex:2, background:canNext() ? NAVY:"#c8cfe0", color:canNext() ? "#fff":"#99a", border:"none", borderRadius:10, padding:"12px", fontSize:14, fontWeight:700, cursor:canNext() ? "pointer":"not-allowed", transition:"all 0.2s" }}>
               Continue →
             </button>

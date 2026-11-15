@@ -3,177 +3,87 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bookers Details — MAXX Events & Planners</title>
-<meta name="description" content="View all quote requests and booker details for MAXX Events">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Leads — MAXX Events & Planners</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin/css/admin-nav.css">
+<link rel="stylesheet" href="admin/css/admin-ui.css">
 <style>
-:root {
-  --black: #0A0A0A;
-  --gold: #C9A84C;
-  --gold-light: #E8C97A;
-  --gold-dark: #9A7A2E;
-  --white: #F8F4EE;
-  --charcoal: #1A1A1A;
-  --mid: #2A2A2A;
-  --muted: #666;
-  --green: #25D366;
-  --gold-rgb: 201,168,76;
+.toolbar { display: grid; gap: 12px; margin-bottom: 16px; }
+.toolbar-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.search { position: relative; flex: 1 1 260px; min-width: 220px; }
+.search .input { padding-left: 38px; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+.seg { display: inline-flex; background: var(--charcoal); border: 1px solid var(--mid); border-radius: var(--radius-sm); padding: 3px; gap: 2px; }
+.seg button { background: transparent; border: 0; color: var(--dim); font-size: 12px; padding: 7px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+.seg button:hover { color: var(--white); }
+.seg button.on { background: rgba(201, 168, 76, .16); color: var(--gold); font-weight: 600; }
+.count-line { color: var(--dim); font-size: 12px; margin: 0 0 12px; }
+.tools { position: relative; }
+.tools summary { list-style: none; }
+.tools summary::-webkit-details-marker { display: none; }
+.tools-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; background: var(--charcoal); border: 1px solid var(--mid); border-radius: 10px; padding: 6px; min-width: 260px; box-shadow: 0 14px 40px rgba(0, 0, 0, .55); }
+.tools-menu button { display: block; width: 100%; text-align: left; background: transparent; border: 0; color: var(--white); padding: 10px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.tools-menu button:hover { background: rgba(201, 168, 76, .1); }
+.tools-menu small { display: block; color: var(--dim); font-size: 11px; margin-top: 2px; }
+
+.year { margin-bottom: 14px; border: 1px solid var(--mid); border-radius: var(--radius); background: rgba(26, 26, 26, .55); overflow: hidden; }
+.year > .grp-head { background: var(--charcoal); }
+.grp-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: transparent; border: 0; color: var(--white); cursor: pointer; text-align: left; }
+.grp-head:hover { background: rgba(201, 168, 76, .05); }
+.chev { width: 18px; height: 18px; color: var(--gold); transition: transform .2s var(--ease); flex: none; }
+.open > .grp-head .chev { transform: rotate(90deg); }
+.grp-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .05em; line-height: 1; }
+.month .grp-title { font-size: 20px; color: var(--gold-light); }
+.grp-meta { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.tag { font-size: 11px; color: var(--dim); border: 1px solid var(--mid); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.tag.gold { color: var(--gold); border-color: rgba(201, 168, 76, .35); }
+.tag.purple { color: #c18ad8; border-color: rgba(155, 89, 182, .4); }
+.grp-body { display: none; }
+.open > .grp-body { display: block; }
+.month { border-top: 1px solid var(--mid); }
+.month > .grp-body { padding: 0 8px 10px; }
+
+.lt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.lt th { text-align: left; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--mid); white-space: nowrap; }
+.lt td { padding: 11px 10px; border-bottom: 1px solid rgba(42, 42, 42, .6); vertical-align: middle; }
+.lt tr:last-child td { border-bottom: 0; }
+.lt tbody tr:hover td { background: rgba(201, 168, 76, .045); }
+.cell-name { font-weight: 600; }
+.cell-sub { color: var(--dim); font-size: 12px; }
+.link-cell { background: none; border: 0; padding: 0; color: var(--gold); font-family: ui-monospace, monospace; font-size: 12px; cursor: pointer; letter-spacing: .03em; }
+.link-cell:hover { text-decoration: underline; }
+.phone { color: var(--white); text-decoration: none; white-space: nowrap; }
+.phone:hover { color: var(--green); }
+.row-actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: nowrap; }
+.warn-dot { display: inline-block; width: 7px; height: 7px; background: var(--red); border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: rgba(201, 168, 76, .08); border: 1px solid rgba(201, 168, 76, .18); color: var(--gold); font-size: 11px; padding: 3px 10px; border-radius: 999px; }
+.svc { background: var(--black); border: 1px solid var(--mid); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.svc b { color: var(--gold); font-size: 12px; display: block; margin-bottom: 4px; }
+.svc ul { margin: 0; padding-left: 16px; color: var(--dim); font-size: 12px; }
+.wa-box { background: rgba(37, 211, 102, .05); border: 1px solid rgba(37, 211, 102, .22); border-radius: var(--radius); padding: 14px; }
+.wa-box .textarea { min-height: 170px; font-size: 13px; }
+.wa-hint { color: var(--dim); font-size: 12px; margin: 8px 0 0; }
+.row-gap { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+@media (max-width: 960px) {
+  .lt thead { display: none; }
+  .lt, .lt tbody, .lt tr, .lt td { display: block; }
+  .lt tr { border: 1px solid var(--mid); border-radius: 12px; margin: 8px 4px; padding: 10px 12px; background: var(--charcoal); }
+  .lt td { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 5px 0; border: 0; text-align: right; }
+  .lt td::before { content: attr(data-label); color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; text-align: left; flex: none; }
+  .lt td.td-actions { justify-content: stretch; }
+  .lt td.td-actions::before { display: none; }
+  .lt td.td-actions .row-actions { width: 100%; }
+  .lt td.td-actions .btn-ui { flex: 1; }
+  .grp-meta .tag:not(.gold) { display: none; }
 }
-
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;overflow-x:hidden;min-height:100vh}
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:var(--black)}
-::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px}
-
-/* ── ADMIN NAV HEADER (shared styles in admin/css/admin-nav.css) ── */
-.page-header{padding:40px 5vw 40px;text-align:center;position:relative}
-.page-header-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(201,168,76,.07) 0%,transparent 65%);pointer-events:none}
-.page-eyebrow{font-size:11px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;font-weight:500;margin-bottom:12px;position:relative;z-index:1}
-.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);letter-spacing:.04em;position:relative;z-index:1;margin-bottom:8px}
-.page-title span{color:var(--gold)}
-.page-sub{font-size:14px;color:var(--muted);position:relative;z-index:1;max-width:500px;margin:0 auto}
-.auth-banner{max-width:1200px;margin:0 auto 16px;padding:0 5vw;font-size:12px;color:var(--muted)}
-.auth-banner strong{color:var(--gold)}
-.auth-banner a{color:var(--gold);text-decoration:none}
-
-/* ── STATS BAR ── */
-.stats-bar{max-width:1200px;margin:0 auto 32px;padding:0 5vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
-.stat-box{background:var(--charcoal);border:1px solid var(--mid);border-radius:10px;padding:18px 16px;text-align:center}
-.stat-num{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--gold);letter-spacing:.04em;line-height:1}
-.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:500}
-
-/* ── CONTROLS ── */
-.controls-bar{max-width:1200px;margin:0 auto 20px;padding:0 5vw;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.search-box{flex:1;min-width:240px;position:relative}
-.search-box input{width:100%;background:var(--charcoal);border:1px solid var(--mid);border-radius:8px;padding:12px 16px 12px 40px;font-size:13px;color:var(--white);font-family:'Outfit',sans-serif;outline:none;transition:border-color .2s}
-.search-box input:focus{border-color:rgba(201,168,76,.4)}
-.search-box input::placeholder{color:var(--muted)}
-.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none}
-.filter-group{display:flex;gap:8px;flex-wrap:wrap}
-.filter-btn{background:var(--charcoal);border:1px solid var(--mid);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;white-space:nowrap}
-.filter-btn:hover{border-color:rgba(201,168,76,.4);color:var(--white)}
-.filter-btn.active{background:rgba(201,168,76,.12);border-color:var(--gold);color:var(--gold)}
-.btn-export{background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:12px;font-weight:500;padding:10px 16px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;white-space:nowrap}
-.btn-export:hover{background:rgba(201,168,76,.08);border-color:var(--gold)}
-.btn-clear{background:transparent;border:1px solid rgba(255,80,80,.3);color:#ff6060;font-size:12px;font-weight:500;padding:10px 16px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;white-space:nowrap}
-.btn-clear:hover{background:rgba(255,80,80,.08);border-color:#ff6060}
-
-/* ── BOOKERS TABLE ── */
-.table-container{max-width:1200px;margin:0 auto;padding:0 5vw 40px}
-.bookers-table{width:100%;border-collapse:separate;border-spacing:0}
-.bookers-table thead{position:sticky;top:64px;z-index:10}
-.bookers-table th{background:var(--charcoal);border-bottom:2px solid var(--gold);padding:14px 16px;font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;text-align:left;white-space:nowrap}
-.bookers-table th:first-child{border-radius:10px 0 0 0}
-.bookers-table th:last-child{border-radius:0 10px 0 0}
-.bookers-table td{background:rgba(26,26,26,.5);border-bottom:1px solid var(--mid);padding:14px 16px;font-size:13px;color:rgba(248,244,238,.85);vertical-align:middle}
-.bookers-table tr:hover td{background:rgba(201,168,76,.04)}
-.bookers-table tr:last-child td:first-child{border-radius:0 0 0 10px}
-.bookers-table tr:last-child td:last-child{border-radius:0 0 10px 0}
-
-/* ── BOOKER CARDS (MOBILE) ── */
-.booker-cards{display:none;flex-direction:column;gap:12px}
-.booker-card{background:var(--charcoal);border:1px solid var(--mid);border-radius:12px;overflow:hidden}
-.booker-card-header{padding:16px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--mid)}
-.booker-card-name{font-size:15px;font-weight:600;color:var(--white)}
-.booker-card-code{font-size:11px;color:var(--gold);font-family:monospace;letter-spacing:.04em;margin-top:2px}
-.booker-card-event{font-size:12px;color:var(--muted);margin-top:4px}
-.booker-card-badge{font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.badge-new{background:rgba(201,168,76,.15);color:var(--gold)}
-.badge-contacted{background:rgba(37,211,102,.12);color:#2ecc71}
-.badge-quoted{background:rgba(52,152,219,.12);color:#3498db}
-.badge-confirmed{background:rgba(155,89,182,.12);color:#9b59b6}
-.booker-card-body{padding:16px;display:flex;flex-direction:column;gap:8px}
-.booker-card-row{display:flex;justify-content:space-between;align-items:center;font-size:12px}
-.booker-card-label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
-.booker-card-val{color:var(--white);font-weight:500}
-.booker-card-actions{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--mid)}
-.btn-call{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--green);color:#fff;font-size:12px;font-weight:600;padding:10px;border-radius:6px;text-decoration:none;transition:all .2s}
-.btn-call:hover{background:#1eb854;transform:translateY(-1px)}
-.btn-whatsapp{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:var(--green);font-size:12px;font-weight:600;padding:10px;border-radius:6px;text-decoration:none;transition:all .2s}
-.btn-whatsapp:hover{background:rgba(37,211,102,.18);transform:translateY(-1px)}
-.btn-view{flex:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:12px;font-weight:500;padding:10px 14px;border-radius:6px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;text-decoration:none;white-space:nowrap}
-.btn-view:hover{background:rgba(201,168,76,.08)}
-
-/* ── PHONE CELL ── */
-.phone-link{color:var(--green);text-decoration:none;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;transition:color .2s}
-.phone-link:hover{color:#1eb854;text-decoration:underline}
-.phone-link-secondary{color:var(--muted);text-decoration:none;font-size:12px}
-.phone-link-secondary:hover{color:var(--gold)}
-
-/* ── STATUS PILL ── */
-.status-pill{font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;display:inline-block}
-.status-new{background:rgba(201,168,76,.12);color:var(--gold)}
-.status-contacted{background:rgba(37,211,102,.1);color:#2ecc71}
-.status-quoted{background:rgba(52,152,219,.1);color:#3498db}
-.status-confirmed{background:rgba(155,89,182,.1);color:#9b59b6}
-.status-cancelled{background:rgba(255,80,80,.1);color:#ff6060}
-
-/* ── MODAL ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:20px}
-.modal-overlay.open{display:flex}
-.modal{background:var(--charcoal);border:1px solid var(--mid);border-radius:16px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.modal-header{padding:20px 24px;border-bottom:1px solid var(--mid);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--charcoal);z-index:1;border-radius:16px 16px 0 0}
-.modal-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.04em}
-.modal-title span{color:var(--gold)}
-.modal-close{background:transparent;border:none;color:var(--muted);font-size:24px;cursor:pointer;padding:4px 8px;transition:color .2s;font-family:'Outfit',sans-serif}
-.modal-close:hover{color:var(--white)}
-.modal-body{padding:24px}
-.modal-section{margin-bottom:20px}
-.modal-section-title{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--mid)}
-.modal-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:13px;border-bottom:1px solid rgba(42,42,42,.6)}
-.modal-row:last-child{border-bottom:none}
-.modal-row-label{color:var(--muted);flex-shrink:0;min-width:110px}
-.modal-row-val{color:var(--white);font-weight:500;text-align:right;word-break:break-word;max-width:62%}
-.modal-services{display:flex;flex-direction:column;gap:14px;margin-top:4px}
-.modal-service-cat{background:var(--black);border:1px solid var(--mid);border-radius:10px;padding:12px 14px}
-.modal-service-cat-name{font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px}
-.modal-service-list{list-style:none;display:flex;flex-direction:column;gap:5px}
-.modal-service-list li{font-size:12px;color:rgba(248,244,238,.85);padding-left:14px;position:relative;line-height:1.5}
-.modal-service-list li::before{content:'✦';position:absolute;left:0;color:var(--gold);font-size:8px;top:3px}
-.modal-service-tag{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);color:var(--gold);font-size:10px;padding:4px 10px;border-radius:20px}
-.modal-footer{padding:20px 24px;border-top:1px solid var(--mid);display:flex;gap:10px}
-.modal-footer .btn-call{flex:1}
-.modal-footer .btn-whatsapp{flex:1}
-
-/* ── EMPTY STATE ── */
-.empty-state{text-align:center;padding:60px 20px}
-.empty-icon{font-size:64px;margin-bottom:16px}
-.empty-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--white);letter-spacing:.04em;margin-bottom:8px}
-.empty-desc{font-size:14px;color:var(--muted);max-width:400px;margin:0 auto 24px;line-height:1.7}
-.btn-primary{background:var(--gold);color:var(--black);font-size:13px;font-weight:600;padding:12px 24px;border-radius:6px;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:background .2s;display:inline-block;border:none;cursor:pointer;font-family:'Outfit',sans-serif}
-.btn-primary:hover{background:var(--gold-light)}
-
-/* ── LOADING ── */
-.loading{text-align:center;padding:60px 20px}
-.loading-spinner{width:40px;height:40px;border:3px solid var(--mid);border-top:3px solid var(--gold);border-radius:50%;margin:0 auto 16px;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  .bookers-table{display:none}
-  .booker-cards{display:flex}
-  .stats-bar{grid-template-columns:repeat(2,1fr)}
-  .controls-bar{flex-direction:column;align-items:stretch}
-  .filter-group{justify-content:flex-start}
-  .page-header{padding:32px 5vw 32px}
-}
-
-/* ── ANIMATIONS ── */
-@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-.page-header>*{animation:fadeUp .5s ease both}
-.page-eyebrow{animation-delay:.1s}
-.page-title{animation-delay:.2s}
-.page-sub{animation-delay:.3s}
 </style>
 </head>
 <body>
 
-<!-- ADMIN NAV HEADER -->
 <header class="admin-header">
   <a class="admin-brand" href="admin/index.html">MA<span>XX</span> ADMIN</a>
   <div class="admin-nav" id="topNav">
@@ -190,859 +100,659 @@ body{background:var(--black);color:var(--white);font-family:'Outfit',sans-serif;
   </div>
 </header>
 
-<!-- PAGE HEADER -->
-<section class="page-header">
-  <div class="page-header-bg"></div>
-  <div class="page-eyebrow">Lead Management</div>
-  <h1 class="page-title">BOOKERS <span>DETAILS</span></h1>
-  <p class="page-sub">Shows DB + local + Sheet leads together. Use “Restore from Sheet” to bring back old bookers.</p>
-</section>
-
-<div class="auth-banner" id="authBanner">Checking login…</div>
-
-<!-- STATS BAR -->
-<div class="stats-bar" id="statsBar">
-  <div class="stat-box">
-    <div class="stat-num" id="statTotal">0</div>
-    <div class="stat-label">Total Bookers</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-num" id="statToday" style="color:#2ecc71">0</div>
-    <div class="stat-label">Today</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-num" id="statNew" style="color:var(--gold)">0</div>
-    <div class="stat-label">New Leads</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-num" id="statConfirmed" style="color:#9b59b6">0</div>
-    <div class="stat-label">Confirmed</div>
-  </div>
-</div>
-
-<!-- CONTROLS -->
-<div class="controls-bar">
-  <div class="search-box">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="searchInput" placeholder="Search by name, phone, city, or event type..." oninput="renderBookers()">
-  </div>
-  <div class="filter-group">
-    <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
-    <button class="filter-btn" data-filter="New" onclick="setFilter('New', this)">New</button>
-    <button class="filter-btn" data-filter="Contacted" onclick="setFilter('Contacted', this)">Contacted</button>
-    <button class="filter-btn" data-filter="Quoted" onclick="setFilter('Quoted', this)">Quoted</button>
-    <button class="filter-btn" data-filter="Confirmed" onclick="setFilter('Confirmed', this)">Confirmed</button>
-    <button class="filter-btn" data-filter="Cancelled" onclick="setFilter('Cancelled', this)">Cancelled</button>
-  </div>
-  <div style="display:flex;gap:8px">
-    <a href="manual-entry.html" class="btn-export" style="text-decoration:none">➕ Manual Entry</a>
-    <button class="btn-export" onclick="syncFromDb(true)">🔄 Sync DB</button>
-    <button class="btn-export" onclick="syncFromSheet(true)">📄 Restore from Sheet</button>
-    <button class="btn-export" onclick="importLocalAndSheetToDb()">⬆ Import to DB</button>
-    <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
-    <button class="btn-clear" onclick="clearAll()">🗑 Clear All</button>
-  </div>
-</div>
-<div id="syncStatus" style="max-width:1200px;margin:-10px auto 16px;padding:0 5vw;font-size:11px;color:var(--muted)"></div>
-
-<!-- LOADING STATE -->
-<div class="loading" id="loadingState" style="display:none">
-  <div class="loading-spinner"></div>
-  <div style="color:var(--muted);font-size:14px">Loading bookers...</div>
-</div>
-
-<!-- EMPTY STATE -->
-<div class="empty-state" id="emptyState">
-  <div class="empty-icon">📋</div>
-  <div class="empty-title">NO BOOKERS YET</div>
-  <div class="empty-desc">When someone fills out the Get Quote form on the booking page, their details will appear here. You can then click to call them directly.</div>
-  <a href="booking_form/index.html" class="btn-primary">Go to Booking Form →</a>
-</div>
-
-<!-- TABLE VIEW (Desktop) -->
-<div class="table-container" id="tableView" style="display:none">
-  <table class="bookers-table">
-    <thead>
-      <tr>
-        <th># Code</th>
-        <th>Name</th>
-        <th>Phone</th>
-        <th>Event</th>
-        <th>Date</th>
-        <th>Location</th>
-        <th>Budget</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
-</div>
-
-<!-- CARD VIEW (Mobile) -->
-<div class="booker-cards" id="cardView"></div>
-
-<!-- DETAIL MODAL -->
-<div class="modal-overlay" id="detailModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Booker <span>Details</span></div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+<main class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Lead Management</div>
+      <h1 class="title">LEADS <span>&amp; BOOKINGS</span></h1>
+      <p class="sub" id="authBanner">Checking login…</p>
     </div>
-    <div class="modal-body" id="modalBody"></div>
-    <div class="modal-footer" id="modalFooter"></div>
+    <div class="actions">
+      <a href="manual-entry.html" class="btn-ui">＋ Manual entry</a>
+      <button class="btn-ui" id="refreshBtn" type="button">↻ Refresh</button>
+      <button class="btn-ui" id="exportBtn" type="button">⬇ Export CSV</button>
+      <details class="tools" id="toolsMenu">
+        <summary class="btn-ui">⋯ More</summary>
+        <div class="tools-menu">
+          <button type="button" data-tool="sheet">Import from Google Sheet<small>One-time. Needs the ADMIN_TOKEN from the Apps Script.</small></button>
+          <button type="button" data-tool="browser">Import leads saved in this browser<small>Old leads kept by the previous version of this page.</small></button>
+        </div>
+      </details>
+    </div>
   </div>
-</div>
+
+  <div id="errorBox" class="banner banner-error" role="alert" style="display:none"></div>
+
+  <section class="stats" id="stats" aria-label="Lead summary"></section>
+
+  <section class="toolbar" aria-label="Filters">
+    <div class="toolbar-row">
+      <div class="search">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg>
+        <label class="sr-only" for="q">Search leads</label>
+        <input class="input" id="q" type="search" placeholder="Search name, phone, reference, city, event…" autocomplete="off">
+      </div>
+      <div class="seg" id="basisSeg" role="group" aria-label="Group by">
+        <button type="button" data-basis="event" class="on">By event date</button>
+        <button type="button" data-basis="received">By received date</button>
+      </div>
+      <label class="sr-only" for="yearSel">Year</label>
+      <select class="select select-sm" id="yearSel" style="width:auto"></select>
+      <label class="sr-only" for="monthSel">Month</label>
+      <select class="select select-sm" id="monthSel" style="width:auto"></select>
+      <button class="btn-ui btn-sm" id="orderBtn" type="button" title="Toggle order"></button>
+    </div>
+    <div class="toolbar-row">
+      <div class="seg" id="statusSeg" role="group" aria-label="Status"></div>
+      <button class="btn-ui btn-sm" id="expandBtn" type="button">Expand all</button>
+      <button class="btn-ui btn-sm" id="collapseBtn" type="button">Collapse all</button>
+    </div>
+  </section>
+
+  <p class="count-line" id="countLine"></p>
+  <div id="list" aria-live="polite"></div>
+</main>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-label="Lead details">
+  <div class="drawer-head">
+    <div>
+      <div class="drawer-title" id="dTitle"></div>
+      <div class="drawer-code" id="dCode"></div>
+    </div>
+    <button class="btn-ui btn-icon" id="dClose" type="button" aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-body" id="dBody"></div>
+</aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="admin/config.js"></script>
 <script src="admin/js/auth.js"></script>
-<script src="admin/js/events.js"></script>
 <script src="js/maxx-leads.js"></script>
 <script>
-// ── CONSTANTS ──
-const STORAGE_KEY = "maxx_bookers";
-const MAXX_NUMBERS = ["+918778667396", "+916369687944"];
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec";
+(function () {
+  'use strict';
 
-// ── STATE ──
-let currentFilter = "all";
-let dbBookers = null; // null = not loaded yet; [] = loaded empty
-let currentUser = null;
-let leadsRealtimeChannel = null;
+  var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxRPtvhaNhVA3w24b3lu2cf4dVxij_GxPCByX737xrulo1xyec2x9ntyRiZjSLMHcy4/exec';
+  var STATUSES = ['New', 'Contacted', 'Quoted', 'Confirmed', 'Cancelled'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var L = window.MaxxLeads;
 
-// ── DATA ACCESS ──
-function getLocalBookers() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error("Failed to read bookers from localStorage:", e);
-    return [];
-  }
-}
+  var leads = [];
+  var me = null;
+  var channel = null;
+  var drawerId = null;
+  var drawerActivity = [];
+  var userToggled = {};
+  var filters = { q: '', status: 'all', basis: 'event', year: 'all', month: 'all', order: 'desc' };
 
-function getBookers() {
-  // Always merge DB + local so old bookers are never hidden by an empty DB.
-  return mergeBookersByQuoteCode(Array.isArray(dbBookers) ? dbBookers : [], getLocalBookers());
-}
-
-function mergeBookersByQuoteCode(primaryList, secondaryList) {
-  const map = {};
-  (secondaryList || []).forEach((b) => {
-    if (!b || !b.quoteCode) return;
-    map[b.quoteCode] = b;
-  });
-  (primaryList || []).forEach((b) => {
-    if (!b || !b.quoteCode) return;
-    const prev = map[b.quoteCode];
-    map[b.quoteCode] = prev
-      ? {
-          ...prev,
-          ...b,
-          services: (b.services && Object.keys(b.services).length) ? b.services : (prev.services || {}),
-          vegMenus: (b.vegMenus && Object.keys(b.vegMenus || {}).length) ? b.vegMenus : (prev.vegMenus || null),
-          personName: b.personName || prev.personName || "",
-          notes: b.notes || prev.notes || "",
-        }
-      : b;
-  });
-  return Object.values(map).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-}
-
-function saveBookers(bookers) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookers));
-  } catch (e) {
-    console.error("Failed to save bookers to localStorage:", e);
-  }
-}
-
-async function updateBookerStatus(code, newStatus) {
-  // Update DB first when authenticated
-  if (currentUser && window.MaxxLeads) {
-    try {
-      await MaxxLeads.updateLeadStatus(code, newStatus);
-      if (Array.isArray(dbBookers)) {
-        const idx = dbBookers.findIndex(b => b.quoteCode === code);
-        if (idx !== -1) dbBookers[idx].status = newStatus;
-      }
-    } catch (e) {
-      console.error("Failed to update lead status in DB:", e);
-      // Still allow local/sheet status update if lead is not in DB yet
-    }
-  }
-
-  // Keep localStorage in sync (fallback)
-  const bookers = getLocalBookers();
-  const idx = bookers.findIndex(b => b.quoteCode === code);
-  if (idx !== -1) {
-    bookers[idx].status = newStatus;
-    saveBookers(bookers);
-  } else {
-    // Ensure status change persists locally even for sheet-only rows
-    const fromView = getBookers().find(b => b.quoteCode === code);
-    if (fromView) {
-      bookers.push({ ...fromView, status: newStatus });
-      saveBookers(bookers);
-    }
-  }
-
-  if (Array.isArray(dbBookers)) {
-    const dbIdx = dbBookers.findIndex(b => b.quoteCode === code);
-    if (dbIdx !== -1) dbBookers[dbIdx].status = newStatus;
-  }
-
-  renderBookers();
-
-  if (!SHEETS_URL) return;
-  fetch(SHEETS_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "updateStatus", quoteCode: code, status: newStatus })
-  }).catch(e => console.error("Failed to sync status update:", e));
-}
-
-async function syncFromDb(manual) {
-  const statusEl = document.getElementById('syncStatus');
-  if (!window.MaxxLeads) {
-    if (statusEl) statusEl.textContent = 'Supabase leads helper not loaded.';
-    return;
-  }
-  if (manual && statusEl) statusEl.textContent = 'Loading from DB…';
-
-  try {
-    const fromDb = await MaxxLeads.listLeads();
-    dbBookers = fromDb;
-
-    // IMPORTANT: never wipe local history with an empty DB result.
-    // Merge DB into existing local cache instead of replacing it.
-    const mergedLocal = mergeBookersByQuoteCode(fromDb, getLocalBookers());
-    saveBookers(mergedLocal);
-
-    renderBookers();
-    if (statusEl) {
-      statusEl.textContent = 'Loaded from DB: ' + new Date().toLocaleTimeString('en-IN') +
-        ' · DB ' + fromDb.length + ' · shown ' + getBookers().length + ' (DB + local/sheet)';
-    }
-
-    // If DB is empty, automatically restore from Google Sheet.
-    if (fromDb.length === 0) {
-      await syncFromSheet(true);
-    }
-  } catch (e) {
-    console.error('Failed to load leads from DB:', e);
-    if (statusEl) {
-      statusEl.textContent = 'DB load failed — showing local/sheet fallback. ' + (e.message || '');
-    }
-    if (!Array.isArray(dbBookers)) {
-      dbBookers = null;
-      renderBookers();
-    }
-    await syncFromSheet(true);
-  }
-}
-
-// ── SYNC FROM GOOGLE SHEET ──
-let isSyncing = false;
-
-function isRawWhatsAppNotes(notes) {
-  if (!notes) return false;
-  return /MAXX EVENTS/i.test(notes) && (/Quote Request/i.test(notes) || /SELECTED SERVICES/i.test(notes));
-}
-
-function mergeBookersFromSync(sheetBookers, localBookers) {
-  const localMap = {};
-  localBookers.forEach(b => { if (b.quoteCode) localMap[b.quoteCode] = b; });
-  const merged = sheetBookers.map(sb => {
-    const local = localMap[sb.quoteCode];
-    if (!local) return sb;
-    const sheetHasServices = sb.services && Object.keys(sb.services).length > 0;
-    return {
-      ...sb,
-      services: sheetHasServices ? sb.services : (local.services || {}),
-      vegMenus: local.vegMenus || sb.vegMenus || null,
-      personName: sb.personName || local.personName || "",
-      notes: isRawWhatsAppNotes(sb.notes) ? "" : (sb.notes || local.notes || ""),
-    };
-  });
-  const sheetCodes = new Set(sheetBookers.map(b => b.quoteCode));
-  localBookers.forEach(lb => {
-    if (lb.quoteCode && !sheetCodes.has(lb.quoteCode)) merged.push(lb);
-  });
-  merged.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-  return merged;
-}
-
-function isMenuNotesPart(text) {
-  return /Breakfast:|Lunch:|Dinner:|🌅|☀️|🌙/.test(text || "");
-}
-
-function getUserNotesOnly(notes) {
-  if (!notes || isRawWhatsAppNotes(notes)) return "";
-  return notes.split(" | ").filter(p => !isMenuNotesPart(p)).join(" | ").trim();
-}
-
-function renderVegMenusHtml(b) {
-  const cats = [
-    { id: "breakfast", label: "Breakfast", icon: "🌅" },
-    { id: "lunch", label: "Lunch", icon: "☀️" },
-    { id: "dinner", label: "Dinner", icon: "🌙" },
-  ];
-  if (b.vegMenus && typeof b.vegMenus === "object") {
-    const rows = cats.map(cat => {
-      const sel = b.vegMenus[cat.id] || [];
-      if (!sel.length) return "";
-      return `<div class="modal-row"><span class="modal-row-label">${cat.icon} ${cat.label}</span><span class="modal-row-val">${escapeHtml(sel.join(", "))}</span></div>`;
-    }).filter(Boolean).join("");
-    if (rows) return rows;
-  }
-  if (b.notes) {
-    const menuParts = b.notes.split(" | ").filter(isMenuNotesPart);
-    if (menuParts.length) {
-      return `<div class="modal-row"><span class="modal-row-label">Veg Menus</span><span class="modal-row-val">${escapeHtml(menuParts.join(" · "))}</span></div>`;
-    }
-  }
-  return "";
-}
-
-function renderServicesGrouped(services) {
-  if (!services || !Object.keys(services).length) return "";
-  return Object.entries(services)
-    .filter(([, items]) => items && items.length > 0)
-    .map(([cat, items]) => `
-      <div class="modal-service-cat">
-        <div class="modal-service-cat-name">${escapeHtml(cat)}</div>
-        <ul class="modal-service-list">
-          ${items.map(i => `<li>${escapeHtml(i)}</li>`).join("")}
-        </ul>
-      </div>`).join("");
-}
-
-async function syncFromSheet(manual) {
-  if (!SHEETS_URL || isSyncing) return;
-  isSyncing = true;
-  const statusEl = document.getElementById('syncStatus');
-  if (manual && statusEl) statusEl.textContent = 'Restoring from Google Sheet…';
-
-  try {
-    const res = await fetch(SHEETS_URL);
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Sync failed');
-
-    const local = getLocalBookers();
-    const merged = mergeBookersFromSync(data.bookers || [], local);
-    saveBookers(merged);
-    renderBookers();
-    if (statusEl) {
-      statusEl.textContent = 'Restored from Sheet: ' + new Date().toLocaleTimeString('en-IN') +
-        ' · sheet ' + (data.bookers || []).length +
-        ' · shown ' + getBookers().length;
-    }
-  } catch (e) {
-    console.error('Failed to sync from sheet:', e);
-    if (statusEl) {
-      statusEl.textContent = 'Could not reach the sheet — showing last known local/DB data.';
-    }
-  } finally {
-    isSyncing = false;
-  }
-}
-
-async function convertLeadToEvent(quoteCode) {
-  if (!currentUser || !window.MaxxEvents) {
-    alert('Sign in as superadmin/opsadmin/manager first.');
-    return;
-  }
-
-  const b = getBookers().find(function (x) { return x.quoteCode === quoteCode; });
-  if (!b) {
-    alert('Lead not found: ' + quoteCode);
-    return;
-  }
-
-  const title = (b.personName || b.name || '') + ' — ' + (b.eventType || 'Event');
-  if (!confirm('Create event from this lead?\n\nTitle: ' + title + '\nDate: ' + (b.date || '—') + '\nLocation: ' + (b.location || '—'))) {
-    return;
-  }
-
-  try {
-    const created = await MaxxEvents.createEvent({
-      title: title,
-      eventDate: b.date || null,
-      status: 'confirmed',
-      location: b.location || '',
-      venueName: b.venueNote || '',
-      venueAddress: '',
-      mapsUrl: '',
-      eventManagerName: '',
-      eventManagerPhone: '',
-      uploadOpensAt: '',
-      uploadClosesAt: '',
-      allowedFeatures: [],
-      notes: [
-        'Converted from lead ' + quoteCode,
-        'Client: ' + (b.name || '') + ' · ' + (b.phone || ''),
-        'Budget: ' + (b.budget || '—'),
-        b.notes || '',
-      ].filter(Boolean).join('\n'),
-    }, currentUser);
-
-    // Mark lead as Confirmed
-    await updateBookerStatus(quoteCode, 'Confirmed');
-    closeModal();
-    alert('Event created: "' + created.title + '"\n\nOpen Events page to edit details, add venue address, manager, etc.');
-  } catch (e) {
-    alert('Failed to create event: ' + (e.message || e));
-  }
-}
-
-async function importLocalAndSheetToDb() {
-  if (!currentUser || !window.MaxxLeads) {
-    alert('Please sign in as superadmin first.');
-    return;
-  }
-  const statusEl = document.getElementById('syncStatus');
-  if (statusEl) statusEl.textContent = 'Importing local/sheet leads into DB…';
-
-  // Ensure latest sheet data is in local cache first
-  await syncFromSheet(true);
-  const rows = getLocalBookers();
-  if (!rows.length) {
-    alert('No local/sheet leads found to import.');
-    return;
-  }
-
-  let ok = 0;
-  let fail = 0;
-  for (const row of rows) {
-    try {
-      await MaxxLeads.createPublicLead({
-        ...row,
-        source: row.source || 'import',
-      });
-      ok += 1;
-    } catch (e) {
-      console.error('Import failed for', row.quoteCode, e);
-      fail += 1;
-    }
-  }
-
-  await syncFromDb(true);
-  alert(`Import finished.\nSaved to DB: ${ok}\nFailed: ${fail}`);
-}
-
-// ── FILTERING ──
-function setFilter(filter, btn) {
-  currentFilter = filter;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  renderBookers();
-}
-
-function getFilteredBookers() {
-  let bookers = getBookers();
-  const search = document.getElementById('searchInput')?.value?.toLowerCase() || "";
-
-  // Apply status filter
-  if (currentFilter !== "all") {
-    bookers = bookers.filter(b => b.status === currentFilter);
-  }
-
-  // Apply search
-  if (search) {
-    bookers = bookers.filter(b => {
-      const searchable = [
-        b.name, b.phone, b.personName, b.location,
-        b.eventType, b.budget, b.quoteCode, b.venueType,
-        b.venueNote, b.notes
-      ].filter(Boolean).join(" ").toLowerCase();
-      return searchable.includes(search);
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  function pillClass(s) { return 'pill pill-' + String(s || 'new').toLowerCase(); }
 
-  // Sort: newest first
-  bookers.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-  return bookers;
-}
+  /* ---------- dates (all in India time) ---------- */
+  var ISTFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' });
+  function istDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? '' : ISTFmt.format(d); // YYYY-MM-DD
+  }
+  function todayIst() { return ISTFmt.format(new Date()); }
+  function fmtDay(ymd) {
+    if (!ymd) return '—';
+    var p = String(ymd).slice(0, 10).split('-');
+    if (p.length !== 3) return ymd;
+    return parseInt(p[2], 10) + ' ' + MONTHS[parseInt(p[1], 10) - 1].slice(0, 3) + ' ' + p[0];
+  }
+  function fmtDateTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+  function leadDay(l) { return filters.basis === 'event' ? (l.date ? String(l.date).slice(0, 10) : '') : istDate(l.submittedAt); }
 
-// ── RENDER ──
-function renderBookers() {
-  const bookers = getFilteredBookers();
-  const allBookers = getBookers();
-
-  // Update stats
-  const today = new Date().toDateString();
-  const todayCount = allBookers.filter(b => new Date(b.submittedAt).toDateString() === today).length;
-  const newCount = allBookers.filter(b => b.status === "New").length;
-  const confirmedCount = allBookers.filter(b => b.status === "Confirmed").length;
-
-  document.getElementById('statTotal').textContent = allBookers.length;
-  document.getElementById('statToday').textContent = todayCount;
-  document.getElementById('statNew').textContent = newCount;
-  document.getElementById('statConfirmed').textContent = confirmedCount;
-
-  // Show/hide states
-  const emptyState = document.getElementById('emptyState');
-  const tableView = document.getElementById('tableView');
-  const cardView = document.getElementById('cardView');
-
-  if (allBookers.length === 0) {
-    emptyState.style.display = 'block';
-    tableView.style.display = 'none';
-    cardView.style.display = 'none';
-    return;
+  /* ---------- toasts / errors ---------- */
+  function toast(msg, kind) {
+    var el = document.createElement('div');
+    el.className = 'toast ' + (kind || '');
+    el.textContent = msg;
+    $('toasts').appendChild(el);
+    setTimeout(function () { el.remove(); }, kind === 'err' ? 6000 : 3200);
+  }
+  function showError(msg) {
+    var box = $('errorBox');
+    box.style.display = msg ? 'block' : 'none';
+    box.textContent = msg || '';
   }
 
-  emptyState.style.display = 'none';
-
-  if (bookers.length === 0 && allBookers.length > 0) {
-    // Filter returned nothing
-    emptyState.innerHTML = `
-      <div class="empty-icon">🔍</div>
-      <div class="empty-title">NO MATCHING BOOKERS</div>
-      <div class="empty-desc">No bookers match your current filter or search. Try adjusting your search or clearing filters.</div>
-      <button class="btn-primary" onclick="setFilter('all', document.querySelector('[data-filter=all]')); document.getElementById('searchInput').value=''; renderBookers();">Show All Bookers</button>
-    `;
-    emptyState.style.display = 'block';
-    tableView.style.display = 'none';
-    cardView.style.display = 'none';
-    return;
+  /* ---------- filtering + grouping ---------- */
+  function matches(l) {
+    if (filters.status !== 'all' && l.status !== filters.status) return false;
+    var q = filters.q.trim().toLowerCase();
+    if (q) {
+      var hay = [l.name, l.personName, l.phone, l.phoneE164, l.quoteCode, l.location, l.eventType, l.venueNote, l.budget].join(' ').toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    var day = leadDay(l);
+    if (filters.year !== 'all') {
+      if (!day || day.slice(0, 4) !== String(filters.year)) return false;
+      if (filters.month !== 'all' && parseInt(day.slice(5, 7), 10) - 1 !== Number(filters.month)) return false;
+    }
+    return true;
   }
 
-  tableView.style.display = 'block';
-  cardView.style.display = isMobile() ? 'flex' : 'none';
-
-  // Render table
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = bookers.map((b, i) => `
-    <tr>
-      <td style="font-family:monospace;font-size:11px;color:var(--gold);letter-spacing:.03em">${escapeHtml(b.quoteCode || '—')}</td>
-      <td>
-        <div style="font-weight:500">${escapeHtml(b.name || '—')}</div>
-        ${b.personName ? `<div style="font-size:11px;color:var(--muted)">${escapeHtml(b.personName)}</div>` : ''}
-      </td>
-      <td>
-        <a href="tel:${escapeHtml(b.phone || '')}" class="phone-link">📞 ${escapeHtml(formatPhone(b.phone))}</a>
-      </td>
-      <td>
-        <span style="font-size:12px">${escapeHtml(truncate(b.eventType, 22))}</span>
-      </td>
-      <td style="font-size:12px">${escapeHtml(formatDate(b.date))}</td>
-      <td style="font-size:12px">${escapeHtml(b.location || '—')}</td>
-      <td style="font-weight:600;color:var(--gold);font-size:12px">${escapeHtml(b.budget || '—')}</td>
-      <td>
-        <span class="status-pill status-${(b.status || 'New').toLowerCase()}">${escapeHtml(b.status || 'New')}</span>
-      </td>
-      <td>
-        <div style="display:flex;gap:6px">
-          <a href="tel:${escapeHtml(b.phone || '')}" class="btn-call" style="padding:6px 12px;font-size:11px;border-radius:4px;white-space:nowrap" title="Call ${escapeHtml(b.name)}">📞 Call</a>
-          <a href="https://wa.me/${escapeHtml(stripPhone(b.phone))}" target="_blank" class="btn-whatsapp" style="padding:6px 12px;font-size:11px;border-radius:4px;white-space:nowrap">💬 WA</a>
-          <button class="btn-view" style="padding:6px 10px;font-size:11px;border-radius:4px" onclick="openModal('${escapeHtml(b.quoteCode || '')}')">👁 View</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
-
-  // Render cards
-  cardView.innerHTML = bookers.map(b => `
-    <div class="booker-card">
-      <div class="booker-card-header">
-        <div>
-          <div class="booker-card-name">${escapeHtml(b.name || 'Unknown')}</div>
-          <div class="booker-card-code">${escapeHtml(b.quoteCode || '—')}</div>
-          <div class="booker-card-event">${escapeHtml(truncate(b.eventType, 30))}</div>
-        </div>
-        <span class="booker-card-badge badge-${(b.status || 'New').toLowerCase()}">${escapeHtml(b.status || 'New')}</span>
-      </div>
-      <div class="booker-card-body">
-        <div class="booker-card-row">
-          <span class="booker-card-label">Phone</span>
-          <a href="tel:${escapeHtml(b.phone || '')}" class="phone-link">📞 ${escapeHtml(formatPhone(b.phone))}</a>
-        </div>
-        ${b.personName ? `
-        <div class="booker-card-row">
-          <span class="booker-card-label">Person</span>
-          <span class="booker-card-val">${escapeHtml(b.personName)}</span>
-        </div>` : ''}
-        <div class="booker-card-row">
-          <span class="booker-card-label">Date</span>
-          <span class="booker-card-val">${escapeHtml(formatDate(b.date))}</span>
-        </div>
-        <div class="booker-card-row">
-          <span class="booker-card-label">Location</span>
-          <span class="booker-card-val">${escapeHtml(b.location || '—')}</span>
-        </div>
-        <div class="booker-card-row">
-          <span class="booker-card-label">Budget</span>
-          <span class="booker-card-val" style="color:var(--gold)">${escapeHtml(b.budget || '—')}</span>
-        </div>
-      </div>
-      <div class="booker-card-actions">
-        <a href="tel:${escapeHtml(b.phone || '')}" class="btn-call">📞 Call Now</a>
-        <a href="https://wa.me/${escapeHtml(stripPhone(b.phone))}" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>
-        <button class="btn-view" onclick="openModal('${escapeHtml(b.quoteCode || '')}')">👁</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ── MODAL ──
-function openModal(code) {
-  const bookers = getBookers();
-  const b = bookers.find(x => x.quoteCode === code);
-  if (!b) return;
-
-  const modal = document.getElementById('detailModal');
-  const body = document.getElementById('modalBody');
-  const footer = document.getElementById('modalFooter');
-
-  const servicesHtml = renderServicesGrouped(b.services);
-  const vegMenusHtml = renderVegMenusHtml(b);
-  const userNotes = getUserNotesOnly(b.notes);
-  const showNotes = !!userNotes;
-
-  body.innerHTML = `
-    <div class="modal-section">
-      <div class="modal-section-title">📋 Client Information</div>
-      <div class="modal-row"><span class="modal-row-label">Quote Code</span><span class="modal-row-val" style="font-family:monospace;color:var(--gold)">${escapeHtml(b.quoteCode || '—')}</span></div>
-      <div class="modal-row"><span class="modal-row-label">Name</span><span class="modal-row-val">${escapeHtml(b.name || '—')}</span></div>
-      <div class="modal-row"><span class="modal-row-label">WhatsApp</span><span class="modal-row-val">${escapeHtml(formatPhone(b.phone))}</span></div>
-      ${b.personName ? `<div class="modal-row"><span class="modal-row-label">Bride / Groom</span><span class="modal-row-val">${escapeHtml(b.personName)}</span></div>` : ''}
-      <div class="modal-row"><span class="modal-row-label">Status</span><span class="modal-row-val"><span class="status-pill status-${(b.status || 'New').toLowerCase()}">${escapeHtml(b.status || 'New')}</span></span></div>
-    </div>
-    <div class="modal-section">
-      <div class="modal-section-title">📅 Event Information</div>
-      <div class="modal-row"><span class="modal-row-label">Event Type</span><span class="modal-row-val">${escapeHtml(b.eventType || '—')}</span></div>
-      <div class="modal-row"><span class="modal-row-label">Event Date</span><span class="modal-row-val">${escapeHtml(formatDate(b.date))}</span></div>
-      <div class="modal-row"><span class="modal-row-label">Location</span><span class="modal-row-val">${escapeHtml(b.location || '—')}</span></div>
-      <div class="modal-row"><span class="modal-row-label">Venue Type</span><span class="modal-row-val">${escapeHtml(b.venueType || '—')}</span></div>
-      ${b.venueNote ? `<div class="modal-row"><span class="modal-row-label">Venue Name</span><span class="modal-row-val">${escapeHtml(b.venueNote)}</span></div>` : ''}
-      <div class="modal-row"><span class="modal-row-label">Budget</span><span class="modal-row-val" style="color:var(--gold);font-weight:700">${escapeHtml(b.budget || '—')}</span></div>
-    </div>
-    <div class="modal-section">
-      <div class="modal-section-title">🍽️ Catering & Menus</div>
-      <div class="modal-row"><span class="modal-row-label">Veg Guests</span><span class="modal-row-val">${escapeHtml(b.vegCount || '—')}</span></div>
-      ${vegMenusHtml}
-      <div class="modal-row"><span class="modal-row-label">Non-Veg Guests</span><span class="modal-row-val">${escapeHtml(b.nonVegCount || '—')}</span></div>
-      ${showNotes ? `<div class="modal-row"><span class="modal-row-label">Notes</span><span class="modal-row-val">${escapeHtml(userNotes)}</span></div>` : ''}
-    </div>
-    ${servicesHtml ? `
-    <div class="modal-section">
-      <div class="modal-section-title">✅ Selected Services (${b.servicesCount || Object.values(b.services || {}).flat().length} items)</div>
-      <div class="modal-services">${servicesHtml}</div>
-    </div>` : (b.servicesCount ? `
-    <div class="modal-section">
-      <div class="modal-section-title">✅ Selected Services</div>
-      <div style="font-size:12px;color:var(--muted)">${b.servicesCount} services — re-paste from WhatsApp in Manual Entry to import full list</div>
-    </div>` : '')}
-    <div class="modal-section">
-      <div class="modal-section-title">⏱️ Submission</div>
-      <div class="modal-row"><span class="modal-row-label">Submitted At</span><span class="modal-row-val">${escapeHtml(b.submittedAt ? new Date(b.submittedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '—')}</span></div>
-    </div>
-
-    <div class="modal-section" style="background:var(--black);border:1px solid var(--mid);border-radius:10px;padding:16px;margin-top:8px">
-      <div class="modal-section-title" style="margin-bottom:12px">Update Status</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="filter-btn ${b.status === 'New' ? 'active' : ''}" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'New'); openModal('${escapeHtml(b.quoteCode)}');">New</button>
-        <button class="filter-btn ${b.status === 'Contacted' ? 'active' : ''}" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'Contacted'); openModal('${escapeHtml(b.quoteCode)}');">Contacted</button>
-        <button class="filter-btn ${b.status === 'Quoted' ? 'active' : ''}" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'Quoted'); openModal('${escapeHtml(b.quoteCode)}');">Quoted</button>
-        <button class="filter-btn ${b.status === 'Confirmed' ? 'active' : ''}" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'Confirmed'); openModal('${escapeHtml(b.quoteCode)}');">Confirmed</button>
-        <button class="filter-btn ${b.status === 'Cancelled' ? 'active' : ''}" style="color:#ff6060;border-color:rgba(255,80,80,.3)" onclick="updateBookerStatus('${escapeHtml(b.quoteCode)}', 'Cancelled'); openModal('${escapeHtml(b.quoteCode)}');">Cancelled</button>
-      </div>
-    </div>
-  `;
-
-  const convertBtnHtml = currentUser && ['platform_owner','superadmin','opsadmin','manager'].includes(currentUser.role)
-    ? `<button class="btn-export" style="background:rgba(201,168,76,.12);border-color:var(--gold);color:var(--gold);font-weight:600" onclick="convertLeadToEvent('${escapeHtml(b.quoteCode || '')}')">🎊 Convert to Event</button>`
-    : '';
-
-  footer.innerHTML = `
-    <a href="tel:${escapeHtml(b.phone || '')}" class="btn-call">📞 Call ${escapeHtml(b.name || 'Booker')}</a>
-    <a href="https://wa.me/${escapeHtml(stripPhone(b.phone))}" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>
-    ${convertBtnHtml}
-  `;
-
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-  document.getElementById('detailModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-// ── EXPORT CSV ──
-function exportCSV() {
-  const bookers = getFilteredBookers();
-  if (bookers.length === 0) {
-    alert('No bookers to export.');
-    return;
+  function groupLeads(list) {
+    var years = {};
+    list.forEach(function (l) {
+      var day = leadDay(l);
+      var y = day ? day.slice(0, 4) : 'nodate';
+      var m = day ? parseInt(day.slice(5, 7), 10) - 1 : 0;
+      years[y] = years[y] || { year: y, months: {}, total: 0 };
+      years[y].months[m] = years[y].months[m] || { month: m, leads: [] };
+      years[y].months[m].leads.push(l);
+      years[y].total++;
+    });
+    var dir = filters.order === 'desc' ? -1 : 1;
+    var out = Object.keys(years).filter(function (k) { return k !== 'nodate'; }).sort(function (a, b) { return (a - b) * dir; }).map(function (k) { return years[k]; });
+    if (years.nodate) out.push(years.nodate);
+    out.forEach(function (y) {
+      y.monthList = Object.keys(y.months).map(Number).sort(function (a, b) { return (a - b) * dir; }).map(function (m) {
+        var g = y.months[m];
+        // inside a month: event basis = soonest first; received basis = newest first
+        g.leads.sort(function (a, b) {
+          if (filters.basis === 'event') return (leadDay(a) || '').localeCompare(leadDay(b) || '');
+          return String(b.submittedAt).localeCompare(String(a.submittedAt));
+        });
+        return g;
+      });
+    });
+    return out;
   }
 
-  const headers = ['Quote Code', 'Name', 'Phone', 'Person Name', 'Event Type', 'Event Date', 'Location', 'Venue Type', 'Venue Name', 'Budget', 'Services Count', 'Non-Veg Count', 'Veg Count', 'Notes', 'Status', 'Submitted At'];
-  const rows = bookers.map(b => [
-    b.quoteCode || '',
-    b.name || '',
-    b.phone || '',
-    b.personName || '',
-    b.eventType || '',
-    b.date || '',
-    b.location || '',
-    b.venueType || '',
-    b.venueNote || '',
-    b.budget || '',
-    b.servicesCount || 0,
-    b.nonVegCount || '',
-    b.vegCount || '',
-    b.notes || '',
-    b.status || 'New',
-    b.submittedAt || ''
-  ]);
+  function isOpen(key, defaultOpen) { return key in userToggled ? userToggled[key] : defaultOpen; }
 
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    .join('\n');
-
-  const BOM = '\uFEFF';
-  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `maxx-bookers-${new Date().toISOString().slice(0, 10)}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-// ── CLEAR ALL ──
-function clearAll() {
-  if (confirm('Clear LOCAL browser cache only?\n\nThis does NOT delete Google Sheet data or Supabase DB leads.\nClick "Restore from Sheet" afterward to bring old bookers back.')) {
-    localStorage.removeItem(STORAGE_KEY);
-    renderBookers();
+  /* ---------- rendering ---------- */
+  function renderStats() {
+    var total = leads.length;
+    var by = {};
+    STATUSES.forEach(function (s) { by[s] = 0; });
+    leads.forEach(function (l) { by[l.status] = (by[l.status] || 0) + 1; });
+    var thisMonth = todayIst().slice(0, 7);
+    var monthCount = leads.filter(function (l) { return istDate(l.submittedAt).slice(0, 7) === thisMonth; }).length;
+    var rate = total ? Math.round((by.Confirmed / total) * 100) : 0;
+    var cards = [
+      ['all', total, 'Total leads'],
+      ['_month', monthCount, 'Received this month'],
+      ['New', by.New, 'New — need reply'],
+      ['Quoted', by.Quoted, 'Quoted'],
+      ['Confirmed', by.Confirmed, 'Confirmed'],
+      ['_rate', rate + '%', 'Confirmed rate']
+    ];
+    $('stats').innerHTML = cards.map(function (c) {
+      var clickable = STATUSES.indexOf(c[0]) !== -1 || c[0] === 'all';
+      var active = clickable && filters.status === c[0];
+      var tag = clickable ? 'button type="button" data-stat="' + esc(c[0]) + '"' : 'div';
+      var close = clickable ? 'button' : 'div';
+      return '<' + tag + ' class="stat' + (active ? ' is-active' : '') + '"><div class="stat-num">' + esc(c[1]) + '</div><div class="stat-label">' + esc(c[2]) + '</div></' + close + '>';
+    }).join('');
   }
-}
 
-// ── HELPERS ──
-function escapeHtml(str) {
-  if (!str) return '';
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function formatPhone(phone) {
-  if (!phone) return '—';
-  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
-  if (cleaned.startsWith('+91') && cleaned.length === 13) {
-    return `+91 ${cleaned.slice(3, 8)} ${cleaned.slice(8)}`;
+  function renderStatusSeg() {
+    var items = ['all'].concat(STATUSES);
+    $('statusSeg').innerHTML = items.map(function (s) {
+      var n = s === 'all' ? leads.length : leads.filter(function (l) { return l.status === s; }).length;
+      return '<button type="button" data-status="' + s + '" class="' + (filters.status === s ? 'on' : '') + '">' + (s === 'all' ? 'All' : s) + ' <span style="opacity:.6">' + n + '</span></button>';
+    }).join('');
   }
-  return phone;
-}
 
-function stripPhone(phone) {
-  if (!phone) return '';
-  return phone.replace(/[\s\-\(\)\+]/g, '');
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch {
-    return dateStr;
+  function renderYearMonthSelectors() {
+    var years = {};
+    leads.forEach(function (l) { var d = leadDay(l); if (d) years[d.slice(0, 4)] = true; });
+    var ys = Object.keys(years).sort().reverse();
+    if (filters.year !== 'all' && !years[filters.year]) { filters.year = 'all'; filters.month = 'all'; }
+    $('yearSel').innerHTML = '<option value="all">All years</option>' + ys.map(function (y) {
+      return '<option value="' + y + '"' + (String(filters.year) === y ? ' selected' : '') + '>' + y + '</option>';
+    }).join('');
+    var ms = '<option value="all">All months</option>' + MONTHS.map(function (m, i) {
+      return '<option value="' + i + '"' + (String(filters.month) === String(i) ? ' selected' : '') + '>' + m + '</option>';
+    }).join('');
+    $('monthSel').innerHTML = ms;
+    $('monthSel').disabled = filters.year === 'all';
+    $('orderBtn').textContent = filters.order === 'desc' ? '↓ Newest first' : '↑ Oldest first';
   }
-}
 
-function truncate(str, len) {
-  if (!str) return '';
-  return str.length > len ? str.slice(0, len) + '…' : str;
-}
+  function leadRow(l) {
+    var tel = l.phoneE164 ? 'tel:+' + l.phoneE164 : 'tel:' + esc(l.phone);
+    var needsReply = l.status === 'New';
+    var badPhone = !l.phoneE164;
+    return '<tr data-id="' + esc(l.id) + '">' +
+      '<td data-label="Ref"><button class="link-cell" type="button" data-action="open">' + esc(l.quoteCode) + '</button></td>' +
+      '<td data-label="Customer"><div class="cell-name">' + (needsReply ? '<span class="warn-dot" title="Not contacted yet"></span>' : '') + esc(l.name) + '</div>' +
+        (l.personName ? '<div class="cell-sub">' + esc(l.personName) + '</div>' : '') + '</td>' +
+      '<td data-label="Phone"><a class="phone" href="' + tel + '">' + esc(L.formatPhone(l.phone)) + '</a>' + (badPhone ? '<div class="cell-sub" style="color:var(--red)">Invalid number</div>' : '') + '</td>' +
+      '<td data-label="Event">' + esc(l.eventType || '—') + '</td>' +
+      '<td data-label="Event date">' + esc(fmtDay(l.date)) + '</td>' +
+      '<td data-label="Location">' + esc(l.location || '—') + '</td>' +
+      '<td data-label="Budget">' + esc(l.budget || '—') + '</td>' +
+      '<td data-label="Status"><select class="select select-sm" data-action="status" aria-label="Status for ' + esc(l.name) + '" style="width:auto">' +
+        STATUSES.map(function (s) { return '<option' + (s === l.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></td>' +
+      '<td class="td-actions" data-label=""><div class="row-actions">' +
+        '<button class="btn-ui btn-wa btn-sm" type="button" data-action="wa"' + (badPhone ? ' disabled' : '') + '>WhatsApp</button>' +
+        '<button class="btn-ui btn-sm" type="button" data-action="open">View</button></div></td>' +
+      '</tr>';
+  }
 
-function isMobile() {
-  return window.innerWidth <= 768;
-}
+  function render() {
+    renderStats();
+    renderStatusSeg();
+    renderYearMonthSelectors();
 
-// ── CLOSE MODAL ON BACKGROUND CLICK ──
-document.getElementById('detailModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
+    var shown = leads.filter(matches);
+    $('countLine').textContent = leads.length ? 'Showing ' + shown.length + ' of ' + leads.length + ' leads — grouped by ' + (filters.basis === 'event' ? 'event date' : 'received date') : '';
 
-// ── KEYBOARD SHORTCUT ──
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeModal();
-});
-
-// ── INIT (auth + DB primary) ──
-(async function initLeadsDashboard() {
-  const banner = document.getElementById('authBanner');
-  renderBookers();
-
-  try {
-    const session = await MaxxAuth.requireAuth('admin/login.html');
-    if (!session) return;
-
-    currentUser = await MaxxAuth.getMe();
-
-    if (!MaxxAuth.canAccessModule(currentUser.role, 'leads')) {
-      window.location.href = MaxxAuth.isFullAdmin(currentUser.role) ? 'admin/index.html' : 'admin/event-feed.html';
+    if (!leads.length) {
+      $('list').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">NO LEADS YET</div><p class="empty-desc">When someone submits the booking form, their request appears here. You can also add one by hand.</p><a class="btn-ui btn-solid" href="manual-entry.html">Add a lead</a></div>';
+      return;
+    }
+    if (!shown.length) {
+      $('list').innerHTML = '<div class="empty"><div class="empty-icon">🔎</div><div class="empty-title">NOTHING MATCHES</div><p class="empty-desc">Try clearing the search, status or date filters.</p><button class="btn-ui" type="button" data-action="reset">Clear filters</button></div>';
       return;
     }
 
-    MaxxAuth.applyAdminNav(currentUser.role);
-
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', async function () {
-        try {
-          await MaxxAuth.signOut();
-          window.location.href = 'admin/login.html';
-        } catch (err) {
-          alert(err.message || 'Failed to sign out.');
-        }
-      });
-    }
-
-    if (banner) {
-      banner.innerHTML = `Signed in as <strong>${escapeHtml(currentUser.email)}</strong> · role <strong>${escapeHtml(currentUser.role)}</strong> · org <strong>${escapeHtml(currentUser.organization_name || 'Global')}</strong>`;
-    }
-
-    await syncFromDb(true);
-
-    // Live updates: auto-refresh when any lead row changes.
-    if (window.MaxxLeads && window.MaxxLeads.subscribeLeads) {
-      leadsRealtimeChannel = MaxxLeads.subscribeLeads(function () {
-        syncFromDb(false);
-      });
-    }
-  } catch (e) {
-    console.error(e);
-    if (banner) {
-      banner.textContent = 'Auth/DB unavailable — showing local/sheet fallback. ' + (e.message || '');
-    }
-    syncFromSheet();
+    var curYear = todayIst().slice(0, 4);
+    // While searching / filtering by status, open every group so results are never hidden.
+    var autoOpen = filters.q.trim() !== '' || filters.status !== 'all';
+    var groups = groupLeads(shown);
+    $('list').innerHTML = groups.map(function (y) {
+      var yKey = 'y-' + y.year;
+      var yOpen = isOpen(yKey, autoOpen || y.year === 'nodate' || y.year >= curYear || groups.length === 1 || filters.year !== 'all');
+      var yConfirmed = 0;
+      y.monthList.forEach(function (m) { m.leads.forEach(function (l) { if (l.status === 'Confirmed') yConfirmed++; }); });
+      var months = y.monthList.map(function (m) {
+        var mKey = 'm-' + y.year + '-' + m.month;
+        var mOpen = isOpen(mKey, autoOpen || y.year === 'nodate' || y.year >= curYear || filters.year !== 'all');
+        var mNew = m.leads.filter(function (l) { return l.status === 'New'; }).length;
+        var mConf = m.leads.filter(function (l) { return l.status === 'Confirmed'; }).length;
+        var label = y.year === 'nodate' ? 'No event date' : MONTHS[m.month] + ' ' + y.year;
+        return '<div class="month' + (mOpen ? ' open' : '') + '">' +
+          '<button class="grp-head" type="button" data-toggle="' + mKey + '" aria-expanded="' + mOpen + '">' +
+          '<svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m7 4 6 6-6 6"/></svg>' +
+          '<span class="grp-title">' + esc(label) + '</span>' +
+          '<span class="grp-meta"><span class="tag gold">' + m.leads.length + ' lead' + (m.leads.length === 1 ? '' : 's') + '</span>' +
+          (mNew ? '<span class="tag">' + mNew + ' new</span>' : '') + (mConf ? '<span class="tag purple">' + mConf + ' confirmed</span>' : '') + '</span></button>' +
+          '<div class="grp-body"><table class="lt"><thead><tr><th>Ref</th><th>Customer</th><th>Phone</th><th>Event</th><th>Event date</th><th>Location</th><th>Budget</th><th>Status</th><th></th></tr></thead><tbody>' +
+          (mOpen ? m.leads.map(leadRow).join('') : '') + '</tbody></table></div></div>';
+      }).join('');
+      return '<section class="year' + (yOpen ? ' open' : '') + '">' +
+        '<button class="grp-head" type="button" data-toggle="' + yKey + '" aria-expanded="' + yOpen + '">' +
+        '<svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m7 4 6 6-6 6"/></svg>' +
+        '<span class="grp-title">' + (y.year === 'nodate' ? 'NO DATE' : esc(y.year)) + '</span>' +
+        '<span class="grp-meta"><span class="tag gold">' + y.total + ' lead' + (y.total === 1 ? '' : 's') + '</span>' +
+        (yConfirmed ? '<span class="tag purple">' + yConfirmed + ' confirmed</span>' : '') + '</span></button>' +
+        '<div class="grp-body">' + months + '</div></section>';
+    }).join('');
   }
+
+  /* ---------- data ---------- */
+  async function load(silent) {
+    try {
+      showError('');
+      if (!silent) {
+        $('list').innerHTML = '<div class="skeleton" style="height:64px;margin-bottom:10px"></div><div class="skeleton" style="height:64px;margin-bottom:10px"></div><div class="skeleton" style="height:64px"></div>';
+      }
+      leads = await L.listLeads();
+      render();
+      if (drawerId) {
+        var cur = findLead(drawerId);
+        if (cur) { await refreshActivity(); renderDrawer(); }
+      }
+    } catch (e) {
+      console.error('Failed to load leads:', e);
+      showError('Could not load leads from the database: ' + (e.message || e) + '. Check your internet / that the Supabase project is running, then press Refresh.');
+      if (!silent) $('list').innerHTML = '';
+    }
+  }
+
+  function findLead(id) { for (var i = 0; i < leads.length; i++) if (leads[i].id === id) return leads[i]; return null; }
+
+  async function changeStatus(id, status, selectEl) {
+    var lead = findLead(id);
+    if (!lead || lead.status === status) return;
+    var prev = lead.status;
+    lead.status = status;
+    try {
+      var saved = await L.updateLeadStatus(id, status);
+      if (!saved) throw new Error('Not saved — you may not have permission.');
+      toast(lead.name + ' → ' + status, 'ok');
+    } catch (e) {
+      lead.status = prev;
+      if (selectEl) selectEl.value = prev;
+      toast('Could not change status: ' + (e.message || e), 'err');
+    }
+    render();
+    if (drawerId === id) { await refreshActivity(); renderDrawer(); }
+  }
+
+  async function refreshActivity() {
+    try { drawerActivity = await L.listActivity(drawerId); } catch (e) { drawerActivity = []; console.error(e); }
+  }
+
+  /* ---------- drawer ---------- */
+  function activityHtml(a) {
+    var who = a.created_by_email ? ' · ' + esc(a.created_by_email) : '';
+    var title;
+    if (a.kind === 'status_change') title = 'Status: <b>' + esc(a.from_status || '—') + '</b> → <b>' + esc(a.to_status) + '</b>';
+    else if (a.kind === 'whatsapp') title = 'WhatsApp opened' + (a.template ? ' · ' + esc(a.template) : '');
+    else if (a.kind === 'note') title = 'Note';
+    else if (a.kind === 'call') title = 'Call';
+    else title = 'Lead created';
+    var body = a.kind === 'whatsapp' && a.message ? '<div class="t-msg">' + esc(a.message) + '</div>' : (a.kind === 'note' ? '<div class="t-msg">' + esc(a.note) + '</div>' : '');
+    return '<li class="k-' + esc(a.kind) + '"><div>' + title + '</div><div class="t-meta">' + esc(fmtDateTime(a.created_at)) + who + '</div>' + body + '</li>';
+  }
+
+  function renderDrawer() {
+    var l = findLead(drawerId);
+    if (!l) return;
+    $('dTitle').textContent = l.name;
+    $('dCode').textContent = l.quoteCode + (l.source && l.source !== 'form' ? ' · ' + l.source : '');
+    var tplKey = (l.status === 'Confirmed') ? 'confirmed' : (l.status === 'Quoted' ? 'quote' : (l.status === 'Contacted' ? 'followup' : 'confirmation'));
+    var existingTpl = document.getElementById('tplSel');
+    if (existingTpl) tplKey = existingTpl.value;
+    var msg = L.buildMessage(tplKey, l);
+    var existingMsg = document.getElementById('waMsg');
+    var keepMsg = existingMsg && existingMsg.dataset.dirty === '1' ? existingMsg.value : msg;
+
+    var svc = Object.keys(l.services || {}).filter(function (k) { return (l.services[k] || []).length; }).map(function (k) {
+      return '<div class="svc"><b>' + esc(k) + '</b><ul>' + l.services[k].map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul></div>';
+    }).join('');
+    var menus = Object.keys(l.vegMenus || {}).filter(function (k) { return (l.vegMenus[k] || []).length; }).map(function (k) {
+      return '<div class="svc"><b>' + esc(k) + '</b><ul>' + l.vegMenus[k].map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul></div>';
+    }).join('');
+
+    $('dBody').innerHTML =
+      '<div class="section"><div class="row-gap">' +
+        '<span class="' + pillClass(l.status) + '">' + esc(l.status) + '</span>' +
+        '<label class="sr-only" for="dStatus">Change status</label>' +
+        '<select class="select select-sm" id="dStatus" style="width:auto">' + STATUSES.map(function (s) { return '<option' + (s === l.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
+        '<a class="btn-ui btn-sm" href="' + (l.phoneE164 ? 'tel:+' + esc(l.phoneE164) : 'tel:' + esc(l.phone)) + '">📞 Call</a></div></div>' +
+
+      '<div class="section"><h3 class="section-title">Send WhatsApp</h3><div class="wa-box">' +
+        (l.phoneE164 ? '' : '<div class="banner banner-error">This phone number looks invalid, so WhatsApp can\'t be opened. Fix the number first.</div>') +
+        '<div class="field"><label for="tplSel">Message template</label><select class="select" id="tplSel">' +
+          L.TEMPLATES.map(function (t) { return '<option value="' + t.key + '"' + (t.key === tplKey ? ' selected' : '') + '>' + esc(t.label) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="field" style="margin-bottom:10px"><label for="waMsg">Message to ' + esc(L.formatPhone(l.phone)) + ' (you can edit)</label><textarea class="textarea" id="waMsg">' + esc(keepMsg) + '</textarea></div>' +
+        '<div class="row-gap"><button class="btn-ui btn-wa btn-solid" id="waSend" type="button"' + (l.phoneE164 ? '' : ' disabled') + '>Open in WhatsApp</button>' +
+        '<button class="btn-ui btn-sm" id="waCopy" type="button">Copy text</button></div>' +
+        '<p class="wa-hint">Opens WhatsApp with this message ready for ' + esc(l.name) + '. Press <b>Send</b> there. This lead is logged as “WhatsApp opened” below, and moves from New to Contacted. (The app cannot see whether you pressed Send.)</p>' +
+      '</div></div>' +
+
+      '<div class="section"><h3 class="section-title">Event</h3><dl class="kv">' +
+        '<dt>Event</dt><dd>' + esc(l.eventType || '—') + '</dd>' +
+        (l.personName ? '<dt>Person</dt><dd>' + esc(l.personName) + '</dd>' : '') +
+        '<dt>Date</dt><dd>' + esc(fmtDay(l.date)) + '</dd>' +
+        '<dt>Location</dt><dd>' + esc(l.location || '—') + '</dd>' +
+        '<dt>Venue</dt><dd>' + esc([l.venueType, l.venueNote].filter(Boolean).join(' — ') || '—') + '</dd>' +
+        '<dt>Budget</dt><dd>' + esc(l.budget || '—') + '</dd>' +
+        '<dt>Phone</dt><dd>' + esc(L.formatPhone(l.phone)) + '</dd>' +
+        '<dt>Received</dt><dd>' + esc(fmtDateTime(l.submittedAt)) + '</dd>' +
+        (l.lastContactedAt ? '<dt>Last WhatsApp</dt><dd>' + esc(fmtDateTime(l.lastContactedAt)) + '</dd>' : '') +
+        '<dt>Catering</dt><dd>' + esc([l.vegCount ? 'Veg ' + l.vegCount : '', l.nonVegCount ? 'Non-veg ' + l.nonVegCount : ''].filter(Boolean).join(' · ') || '—') + '</dd>' +
+      '</dl></div>' +
+      (svc ? '<div class="section"><h3 class="section-title">Services (' + (l.servicesCount || 0) + ')</h3>' + svc + '</div>' : '') +
+      (menus ? '<div class="section"><h3 class="section-title">Veg menus</h3>' + menus + '</div>' : '') +
+      (l.notes ? '<div class="section"><h3 class="section-title">Customer notes</h3><p style="white-space:pre-wrap;font-size:13px;color:var(--dim);margin:0">' + esc(l.notes) + '</p></div>' : '') +
+
+      '<div class="section"><h3 class="section-title">Activity</h3>' +
+        '<div class="field"><label class="sr-only" for="noteIn">Add a note</label><textarea class="textarea" id="noteIn" style="min-height:70px" placeholder="Add an internal note (call summary, price discussed…)"></textarea></div>' +
+        '<div class="row-gap" style="margin-bottom:16px"><button class="btn-ui btn-sm" id="noteBtn" type="button">Save note</button></div>' +
+        (drawerActivity.length ? '<ul class="timeline">' + drawerActivity.map(activityHtml).join('') + '</ul>' : '<p class="cell-sub">No activity yet.</p>') +
+      '</div>';
+
+    var ta = $('waMsg');
+    if (ta) ta.addEventListener('input', function () { ta.dataset.dirty = '1'; });
+  }
+
+  async function openDrawer(id, focusWa) {
+    drawerId = id;
+    drawerActivity = [];
+    var d = $('drawer');
+    d.classList.add('open'); d.setAttribute('aria-hidden', 'false');
+    $('overlay').classList.add('open');
+    renderDrawer();
+    await refreshActivity();
+    if (drawerId === id) renderDrawer();
+    if (focusWa) { var t = $('waMsg'); if (t) t.focus(); }
+  }
+
+  function closeDrawer() {
+    drawerId = null;
+    $('drawer').classList.remove('open'); $('drawer').setAttribute('aria-hidden', 'true');
+    $('overlay').classList.remove('open');
+  }
+
+  function sendWhatsApp() {
+    var l = findLead(drawerId);
+    if (!l) return;
+    var msg = $('waMsg').value.trim();
+    var tpl = $('tplSel').value;
+    if (!msg) { toast('Message is empty.', 'err'); return; }
+    var url = L.whatsappUrl(l.phone, msg);
+    if (!url) { toast('Invalid phone number.', 'err'); return; }
+    // Open synchronously inside the click so popup blockers allow it.
+    var w = window.open(url, '_blank', 'noopener');
+    if (!w) { window.location.href = url; }
+    L.logWhatsApp(l.id, tpl, msg).then(function () {
+      toast('Logged: WhatsApp opened for ' + l.name, 'ok');
+      return load(true);
+    }).catch(function (e) {
+      toast('WhatsApp opened, but logging failed: ' + (e.message || e), 'err');
+    });
+  }
+
+  /* ---------- CSV export ---------- */
+  function csvCell(v) {
+    var s = String(v == null ? '' : v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // block spreadsheet formula injection
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  function exportCsv() {
+    var rows = leads.filter(matches);
+    if (!rows.length) { toast('Nothing to export.', 'err'); return; }
+    var head = ['Reference', 'Received (IST)', 'Name', 'Phone', 'Person', 'Event', 'Event date', 'Location', 'Venue', 'Budget', 'Services', 'Veg', 'Non-veg', 'Status', 'Source', 'Notes'];
+    var lines = [head.map(csvCell).join(',')];
+    rows.forEach(function (l) {
+      lines.push([l.quoteCode, fmtDateTime(l.submittedAt), l.name, l.phoneE164 ? '+' + l.phoneE164 : l.phone, l.personName, l.eventType, l.date, l.location,
+        [l.venueType, l.venueNote].filter(Boolean).join(' - '), l.budget, l.servicesCount, l.vegCount, l.nonVegCount, l.status, l.source, l.notes].map(csvCell).join(','));
+    });
+    var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'maxx-leads-' + todayIst() + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  /* ---------- one-time legacy import ---------- */
+  function parseLegacyDate(s) {
+    // en-IN locale strings like "15/11/2026, 4:05:09 pm"
+    var m = String(s || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4}),?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i);
+    if (!m) { var d = new Date(s); return isNaN(d.getTime()) ? undefined : d.toISOString(); }
+    var h = parseInt(m[4], 10);
+    if (m[7]) { var pm = m[7].toLowerCase() === 'pm'; if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
+    function p(n) { return String(n).padStart(2, '0'); }
+    return m[3] + '-' + p(m[2]) + '-' + p(m[1]) + 'T' + p(h) + ':' + m[5] + ':' + p(m[6] || 0) + '+05:30';
+  }
+  function normEventDate(s) {
+    if (!s) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(s))) return String(s);
+    return istDate(s);
+  }
+
+  async function runImport(rows, label) {
+    if (!rows.length) { toast('No leads found to import.', 'err'); return; }
+    if (!confirm('Import ' + rows.length + ' lead(s) from ' + label + '?\n\nIf a reference already exists its details are refreshed but its status is kept.')) return;
+    var ok = 0, fail = 0, firstErr = '';
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      try {
+        await L.createAdminLead({
+          quoteCode: r.quoteCode, name: r.name, phone: r.phone, personName: r.personName,
+          eventType: r.eventType, date: normEventDate(r.date), location: r.location,
+          venueType: r.venueType, venueNote: r.venueNote, budget: r.budget,
+          servicesCount: r.servicesCount, nonVegCount: r.nonVegCount, vegCount: r.vegCount,
+          notes: r.notes, vegMenus: r.vegMenus, services: r.services,
+          status: r.status, source: ['form', 'manual', 'whatsapp'].indexOf(r.source) !== -1 ? r.source : 'import',
+          submittedAtIso: parseLegacyDate(r.submittedAt)
+        });
+        ok++;
+      } catch (e) { fail++; if (!firstErr) firstErr = (e.message || String(e)) + ' (' + (r.quoteCode || r.name) + ')'; }
+    }
+    toast('Import done: ' + ok + ' saved, ' + fail + ' failed' + (firstErr ? ' — first error: ' + firstErr : ''), fail ? 'err' : 'ok');
+    await load(true);
+  }
+
+  async function importFromSheet() {
+    var token = prompt('Paste the ADMIN_TOKEN you saved in the Google Apps Script (Script properties).\nIt is used once and is not stored.');
+    if (!token) return;
+    try {
+      var res = await fetch(SHEETS_URL + '?token=' + encodeURIComponent(token.trim()));
+      var data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Sheet refused the request');
+      await runImport(data.bookers || [], 'the Google Sheet');
+    } catch (e) { toast('Sheet import failed: ' + (e.message || e), 'err'); }
+  }
+
+  async function importFromBrowser() {
+    var rows = [];
+    try { rows = JSON.parse(localStorage.getItem('maxx_bookers') || '[]'); } catch (e) { rows = []; }
+    await runImport(rows, 'this browser');
+  }
+
+  /* ---------- events ---------- */
+  function bind() {
+    var qTimer;
+    $('q').addEventListener('input', function (e) {
+      clearTimeout(qTimer);
+      qTimer = setTimeout(function () { filters.q = e.target.value; render(); }, 150);
+    });
+    $('basisSeg').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-basis]'); if (!b) return;
+      filters.basis = b.dataset.basis; userToggled = {};
+      Array.prototype.forEach.call($('basisSeg').children, function (c) { c.classList.toggle('on', c === b); });
+      render();
+    });
+    $('yearSel').addEventListener('change', function (e) { filters.year = e.target.value; filters.month = 'all'; render(); });
+    $('monthSel').addEventListener('change', function (e) { filters.month = e.target.value; render(); });
+    $('orderBtn').addEventListener('click', function () { filters.order = filters.order === 'desc' ? 'asc' : 'desc'; render(); });
+    $('statusSeg').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-status]'); if (!b) return;
+      filters.status = b.dataset.status; render();
+    });
+    $('stats').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-stat]'); if (!b) return;
+      filters.status = filters.status === b.dataset.stat ? 'all' : b.dataset.stat; render();
+    });
+    $('expandBtn').addEventListener('click', function () {
+      document.querySelectorAll('[data-toggle]').forEach(function (el) { userToggled[el.dataset.toggle] = true; });
+      render();
+    });
+    $('collapseBtn').addEventListener('click', function () {
+      document.querySelectorAll('[data-toggle]').forEach(function (el) { userToggled[el.dataset.toggle] = false; });
+      render();
+    });
+    $('refreshBtn').addEventListener('click', function () { load(false); });
+    $('exportBtn').addEventListener('click', exportCsv);
+    $('toolsMenu').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-tool]'); if (!b) return;
+      $('toolsMenu').open = false;
+      if (b.dataset.tool === 'sheet') importFromSheet(); else importFromBrowser();
+    });
+
+    $('list').addEventListener('click', function (e) {
+      var t = e.target.closest('[data-toggle]');
+      if (t) {
+        var key = t.dataset.toggle;
+        var wasOpen = t.parentElement.classList.contains('open');
+        userToggled[key] = !wasOpen;
+        render();
+        return;
+      }
+      if (e.target.closest('[data-action="reset"]')) {
+        filters.q = ''; filters.status = 'all'; filters.year = 'all'; filters.month = 'all'; $('q').value = ''; render(); return;
+      }
+      var tr = e.target.closest('tr[data-id]'); if (!tr) return;
+      var act = e.target.closest('[data-action]');
+      if (!act) return;
+      if (act.dataset.action === 'open') openDrawer(tr.dataset.id, false);
+      if (act.dataset.action === 'wa') openDrawer(tr.dataset.id, true);
+    });
+    $('list').addEventListener('change', function (e) {
+      var sel = e.target.closest('select[data-action="status"]'); if (!sel) return;
+      var tr = sel.closest('tr[data-id]');
+      changeStatus(tr.dataset.id, sel.value, sel);
+    });
+
+    $('dClose').addEventListener('click', closeDrawer);
+    $('overlay').addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && drawerId) closeDrawer(); });
+    $('dBody').addEventListener('change', function (e) {
+      if (e.target.id === 'dStatus') changeStatus(drawerId, e.target.value);
+      if (e.target.id === 'tplSel') {
+        var ta = $('waMsg'); ta.dataset.dirty = '0';
+        ta.value = L.buildMessage(e.target.value, findLead(drawerId));
+      }
+    });
+    $('dBody').addEventListener('click', function (e) {
+      if (e.target.id === 'waSend') sendWhatsApp();
+      if (e.target.id === 'waCopy') {
+        var txt = $('waMsg').value;
+        (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { toast('Message copied.', 'ok'); }, function () { $('waMsg').select(); toast('Press Ctrl+C to copy.', ''); });
+      }
+      if (e.target.id === 'noteBtn') {
+        var l = findLead(drawerId); var val = $('noteIn').value;
+        if (!val.trim()) { toast('Write a note first.', 'err'); return; }
+        L.addNote(l, val).then(function () { toast('Note saved.', 'ok'); return refreshActivity(); }).then(renderDrawer)
+          .catch(function (err) { toast('Could not save note: ' + (err.message || err), 'err'); });
+      }
+    });
+  }
+
+  /* ---------- init ---------- */
+  (async function init() {
+    bind();
+    render();
+    try {
+      if (!window.MaxxAuth) throw new Error(window.MaxxAuthInitError || 'Auth is not available.');
+      var session = await MaxxAuth.requireAuth('admin/login.html');
+      if (!session) return;
+      me = await MaxxAuth.getMe();
+      if (!MaxxAuth.canAccessModule(me.role, 'leads')) {
+        window.location.href = MaxxAuth.isFullAdmin(me.role) ? 'admin/index.html' : 'admin/event-feed.html';
+        return;
+      }
+      MaxxAuth.applyAdminNav(me.role);
+      $('logoutBtn').addEventListener('click', async function () {
+        try { await MaxxAuth.signOut(); window.location.href = 'admin/login.html'; }
+        catch (err) { toast(err.message || 'Failed to sign out.', 'err'); }
+      });
+      $('authBanner').innerHTML = 'Signed in as <strong>' + esc(me.email) + '</strong> · ' + esc(me.role) + ' · ' + esc(me.organization_name || 'All organizations');
+      await load(false);
+      var timer;
+      channel = L.subscribeLeads(function () { clearTimeout(timer); timer = setTimeout(function () { load(true); }, 600); });
+    } catch (e) {
+      console.error(e);
+      $('authBanner').textContent = 'Could not start the dashboard.';
+      showError((e && e.message) || String(e));
+    }
+  })();
+
+  window.addEventListener('beforeunload', function () { if (channel) L.unsubscribe(channel); });
 })();
-
-// ── LISTEN FOR STORAGE CHANGES FROM OTHER TABS ──
-window.addEventListener('storage', function(e) {
-  if (e.key === STORAGE_KEY && !Array.isArray(dbBookers)) {
-    renderBookers();
-  }
-});
-
-// ── REFRESH FROM DB EVERY 30 SECONDS ──
-setInterval(function () {
-  if (currentUser) syncFromDb(false);
-  else syncFromSheet();
-}, 30000);
-
-window.addEventListener('beforeunload', function () {
-  if (window.MaxxLeads && window.MaxxLeads.unsubscribe && leadsRealtimeChannel) {
-    MaxxLeads.unsubscribe(leadsRealtimeChannel);
-    leadsRealtimeChannel = null;
-  }
-});
 </script>
 </body>
 </html>

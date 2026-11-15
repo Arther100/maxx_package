@@ -13,8 +13,21 @@
 //    (The Web App URL stays exactly the same, so nothing needs to change
 //    in booking_form/index.html, bookers-details.html or manual-entry.html)
 // ------------------------------------------------
+// SECURITY (added): reading all leads, changing a lead's status and deleting
+// duplicates now require a secret token. One-time setup:
+//   Project Settings (gear icon) -> Script properties -> Add property
+//     Name:  ADMIN_TOKEN     Value: <a long random string you invent>
+// Without ADMIN_TOKEN set, doGet and admin actions are DISABLED (safe default).
+// The public booking form can still append NEW rows (no token needed), but it
+// can no longer overwrite an existing row.
+// ------------------------------------------------
 
 const SHEET_NAME = "Quotes";
+
+function isAdminToken_(token) {
+  const saved = PropertiesService.getScriptProperties().getProperty("ADMIN_TOKEN");
+  return !!saved && !!token && String(token) === saved;
+}
 
 const HEADERS = [
   "Timestamp", "Name", "Phone", "Person Name", "Event Type",
@@ -154,6 +167,9 @@ function dataToRow_(data, isNew) {
 
 function doGet(e) {
   try {
+    if (!isAdminToken_(e && e.parameter && e.parameter.token)) {
+      return jsonOut_({ success: false, error: "Not authorised" });
+    }
     const sheet = getSheet_();
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return jsonOut_({ success: true, bookers: [] });
@@ -178,11 +194,15 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const sheet = getSheet_();
 
+    const isAdmin = isAdminToken_(data.token);
+
     if (data.action === "updateStatus") {
+      if (!isAdmin) return jsonOut_({ success: false, error: "Not authorised" });
       return updateStatus_(sheet, data.quoteCode, data.status);
     }
 
     if (data.action === "deleteDuplicates") {
+      if (!isAdmin) return jsonOut_({ success: false, error: "Not authorised" });
       return deleteDuplicates_(sheet);
     }
 
@@ -193,6 +213,8 @@ function doPost(e) {
     const existingRow = data.quoteCode ? findRowByQuoteCode_(sheet, data.quoteCode) : -1;
 
     if (existingRow > 0) {
+      // Public visitors may only add new rows, never overwrite existing ones.
+      if (!isAdmin) return jsonOut_({ success: false, error: "Quote code already exists" });
       const existing = sheet.getRange(existingRow, 1, 1, HEADERS.length).getValues()[0];
       data.timestamp = existing[0];
       if (!data.status && existing[15]) data.status = existing[15];
